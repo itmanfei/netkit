@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\tcp">
+      <UniqueIdentifier>{54e8045e-58c8-4cd3-b468-c16581f854cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\http">
+      <UniqueIdentifier>{a0c01213-6a66-47fe-bcf7-fe5eceac5bf5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\http">
+      <UniqueIdentifier>{55ae0a4a-47a1-47d0-902b-c8fec3e179da}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tcp\listener.h">
+      <Filter>头文件\tcp</Filter>
+    </ClInclude>
+    <ClInclude Include="io_context_pool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="http\server.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="http\settings.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="http\context.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="http\connection.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="http\cors_filter.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="http\filter.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="http\router.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+    <ClInclude Include="utility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="trace_log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="http\client.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="http\context.cpp">
+      <Filter>源文件\http</Filter>
+    </ClCompile>
+    <ClCompile Include="http\cors_filter.cpp">
+      <Filter>源文件\http</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
