@@ -9,11 +9,9 @@
 #include <regex>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace netkit::http {
@@ -42,27 +40,27 @@ static bool SplitKeyValue(const S& src, K& key, V& val) noexcept {
 }
 
 template <class S>
-static bool IsNeedDecode(const S& text) noexcept {
-  return std::find_if(text.begin(), text.end(), [](const char c) {
+static bool IsNeedDecode(const S& str) noexcept {
+  return std::find_if(str.begin(), str.end(), [](const char c) {
            return c == '%' || c == '+';
-         }) != text.end();
+         }) != str.end();
 }
 
 template <class S>
-static std::string DecodeData(const S& text) noexcept {
+static std::string DecodeData(const S& str) noexcept {
   std::string result;
-  const auto len = text.size();
+  const auto len = str.size();
   result.reserve(len);
   for (std::size_t i = 0; i < len; ++i) {
-    switch (text[i]) {
+    switch (str[i]) {
       case '+': {
         result += ' ';
         break;
       }
       case '%': {
         if (i + 2 < len) {
-          char c1 = text[i + 1];
-          char c2 = text[i + 2];
+          char c1 = str[i + 1];
+          char c2 = str[i + 2];
           if (c1 >= '0' && c1 <= '9' && c2 >= '0' && c2 <= '9') {
             c1 -= '0';
             c2 -= '0';
@@ -76,8 +74,7 @@ static std::string DecodeData(const S& text) noexcept {
             result += '%';
             break;
           }
-          auto hex = c1 * 16 + c2;
-          result += char(hex);
+          result += char(c1 * 16 + c2);
           i += 2;
         } else {
           result += '%';
@@ -85,7 +82,7 @@ static std::string DecodeData(const S& text) noexcept {
         break;
       }
       default: {
-        result += text[i];
+        result += str[i];
         break;
       }
     }
@@ -147,8 +144,8 @@ class BasicRouter {
    public:
     virtual ~BaseBinder() noexcept = default;
 
-    virtual bool IsMatchedArgs(std::size_t path_arg_num,
-                               const ArgumentMap& arg_map) const noexcept = 0;
+    virtual bool IsMatched(std::size_t path_arg_num,
+                           const ArgumentMap& arg_map) const noexcept = 0;
 
     virtual Ret Invoke(PreArgs&&... pre_args, std::cmatch& results,
                        ArgumentMap& arg_map) = 0;
@@ -165,35 +162,36 @@ class BasicRouter {
           capture_params_(std::move(capture_params)),
           func_(std::forward<Function>(func)) {
       if (capture_params_.size() + path_arg_num_ != Traits::kArgNum) {
-        throw std::runtime_error("Parameter number mismatch");
+        throw std::runtime_error("Number of parameters does not match");
       }
     }
 
-    bool IsMatchedArgs(std::size_t path_arg_num,
-                       const ArgumentMap& arg_map) const noexcept override {
+    bool IsMatched(std::size_t path_arg_num,
+                   const ArgumentMap& arg_map) const noexcept override {
       if (path_arg_num != path_arg_num_) {
         return false;
       }
-      return IsMatchedCaptureArgs<0>(arg_map);
+      return IsMatched<0>(arg_map);
     }
 
     template <size_t N>
-    std::enable_if_t<N != Traits::kArgNum, bool> IsMatchedCaptureArgs(
+    std::enable_if_t<N != Traits::kArgNum, bool> IsMatched(
         const ArgumentMap& arg_map) const noexcept {
       if (path_arg_num_ > N) {
-        return IsMatchedCaptureArgs<N + 1>(arg_map);
+        return IsMatched<N + 1>(arg_map);
       }
       using ValueType = std::remove_cv_t<
           std::remove_reference_t<typename Traits::template ValueType<N>>>;
       if constexpr (!IsOptional<ValueType>::kValue) {
-        if (arg_map.find(capture_params_[N - path_arg_num_]) == arg_map.end())
+        if (!arg_map.contains(capture_params_[N - path_arg_num_])) {
           return false;
+        }
       }
-      return IsMatchedCaptureArgs<N + 1>(arg_map);
+      return IsMatched<N + 1>(arg_map);
     }
 
     template <size_t N>
-    std::enable_if_t<N == Traits::kArgNum, bool> IsMatchedCaptureArgs(
+    std::enable_if_t<N == Traits::kArgNum, bool> IsMatched(
         const ArgumentMap&) const noexcept {
       return true;
     }
@@ -239,22 +237,18 @@ class BasicRouter {
       constexpr auto index = sizeof...(Values);
       using ValueType = std::remove_cv_t<
           std::remove_reference_t<typename Traits::template ValueType<index>>>;
-      ValueType value = {};
+      ValueType value;
       if (path_arg_num_ > index) {
         SetValue(value, results[index + 1].str());
       } else {
-        const auto& name = capture_params_[index - path_arg_num_];
-        auto it = arg_map.find(name);
+        auto it = arg_map.find(capture_params_[index - path_arg_num_]);
         if constexpr (IsOptional<ValueType>::kValue) {
           if (it != arg_map.end()) {
             SetValue(value, std::move(it->second));
           }
         } else {
-          if (it != arg_map.end()) {
-            SetValue(value, std::move(it->second));
-          } else {
-            throw std::runtime_error("Required argument '" + name + "'");
-          }
+          assert(it != arg_map.end());
+          SetValue(value, std::move(it->second));
         }
       }
       return DoInvoke(std::forward<PreArgs>(pre_args)..., results, arg_map,
@@ -314,8 +308,7 @@ class BasicRouter {
     }
 
     bool IsAllowedMethod(const std::string& method) const noexcept {
-      return allowed_method_binders_.find(method) !=
-             allowed_method_binders_.end();
+      return allowed_method_binders_.contains(method);
     }
 
     Ret Invoke(PreArgs&&... pre_args, const std::string& method,
@@ -325,17 +318,14 @@ class BasicRouter {
         path_arg_num = results.size() - 1;
       }
       const auto it = allowed_method_binders_.find(method);
-      if (it != allowed_method_binders_.end()) {
-        for (const auto& binder : it->second) {
-          if (binder->IsMatchedArgs(path_arg_num, arg_map)) {
-            return binder->Invoke(std::forward<PreArgs>(pre_args)..., results,
-                                  arg_map);
-          }
+      assert(it != allowed_method_binders_.end());
+      for (const auto& binder : it->second) {
+        if (binder->IsMatched(path_arg_num, arg_map)) {
+          return binder->Invoke(std::forward<PreArgs>(pre_args)..., results,
+                                arg_map);
         }
-        throw std::runtime_error("Argument mismatch");
-      } else {
-        throw std::runtime_error("Method not allowed");
       }
+      throw std::runtime_error("Parameter mismatch");
       return Ret();
     }
 
@@ -463,23 +453,18 @@ class BasicRouter {
       throw std::runtime_error("Method not allowed");
     }
     ArgumentMap arg_map;
-    if (param_sv.size() > 0) {
-      std::size_t pos = 0;
-      std::string key, val;
-      while ((pos = param_sv.find('&')) != std::string_view::npos) {
-        if (SplitKeyValue(param_sv.substr(0, pos), key, val)) {
-          if (IsNeedDecode(key)) {
-            key = DecodeData(key);
-          }
-          if (IsNeedDecode(val)) {
-            val = DecodeData(val);
-          }
-          ToLower(key);
-          arg_map.insert(std::make_pair(std::move(key), std::move(val)));
-        }
+    while (param_sv.size() > 0) {
+      std::string_view kv_sv;
+      const auto pos = param_sv.find('&');
+      if (pos != std::string_view::npos) {
+        kv_sv = param_sv.substr(0, pos);
         param_sv.remove_prefix(pos + 1);
+      } else {
+        kv_sv = param_sv;
+        param_sv = "";
       }
-      if (SplitKeyValue(param_sv, key, val)) {
+      std::string key, val;
+      if (SplitKeyValue(kv_sv, key, val)) {
         if (IsNeedDecode(key)) {
           key = DecodeData(key);
         }

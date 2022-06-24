@@ -15,16 +15,6 @@ class Filter {
 
   virtual void OnOutgingResponse(const Context::Ptr& ctx,
                                  boost::beast::http::response_header<>& resp) {}
-
-  static const char* GetResultString(Result ret) noexcept {
-    switch (ret) {
-      case Result::kPassed:
-        return "Passed";
-      case Result::kResponded:
-        return "Responsed";
-    }
-    return "";
-  }
 };
 
 }  // namespace netkit::http

@@ -15,7 +15,7 @@ class BasicServer : public std::enable_shared_from_this<BasicServer<T>> {
   explicit BasicServer(IoContextPool& pool) noexcept : listener_(pool) {
     static_assert(std::is_same_v<T, PlainConnection>,
                   "The connection type must be <PlainConnection>");
-    TRACE_OBJ(kTag) << "Create plain server" << std::endl;
+    TRACE_OBJ(kTag) << "Create" << std::endl;
   }
 
   BasicServer(IoContextPool& pool, boost::asio::ssl::context& ssl_ctx) noexcept
@@ -24,7 +24,7 @@ class BasicServer : public std::enable_shared_from_this<BasicServer<T>> {
         std::is_same_v<T, SslConnection> || std::is_same_v<T, DetectConnection>,
         "The connection type must be <SslConnection> or "
         "<DetectConnection>");
-    TRACE_OBJ(kTag) << "Create ssl server" << std::endl;
+    TRACE_OBJ(kTag) << "Create" << std::endl;
   }
 
   ~BasicServer() noexcept { TRACE_OBJ(kTag) << "Destory" << std::endl; }

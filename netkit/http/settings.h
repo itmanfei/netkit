@@ -7,7 +7,6 @@
 
 namespace netkit::http {
 
-class Context;
 class Filter;
 
 class Settings {

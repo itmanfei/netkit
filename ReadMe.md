@@ -1,3 +1,13 @@
+# 依赖说明
+
+- BOOST 1.79.0
+- OpenSSL 3.x
+- C++20
+
+# 编码风格
+
+Google C++ Style
+
 # 测试编译器
 
 - MSVC14.3  C++20
@@ -8,8 +18,10 @@
 ```c++
 // Only for http
 using PlainServer = BasicServer<PlainConnection>;
+
 // Only for https
 using SslServer = BasicServer<SslConnection>;
+
 // Both http and https(Automatic detection of http or https)
 using DetectServer = BasicServer<DetectConnection>;
 ```
@@ -23,9 +35,14 @@ boost::asio::io_context的对象池，每个io_context对象运行在单独的�
 ```c++
 // 2个io_context对象和线程，每个io_context对象分别运行的单独的线程
 IoContextPool pool(2);
+
 // 运行所有io_context对象（会调用io_context对象的run方法）
 // 该接口会阻塞，直到调用pool.Stop
 pool.Run();
+
+// 获取一个io_context
+pool.Get();
+
 // 停止所有io_context，调用Stop后，pool.Run方法会结束
 pool.Stop();
 ```
@@ -40,23 +57,18 @@ class Filter {
   // kPassed：请求可通过过滤器，可以进行下一步处理
   // kResponsed：请求不能通过过滤器，并且已经对请求进行了回应
   enum class Result { kPassed, kResponded };
+    
   virtual ~Filter() noexcept {}
+    
   // 过滤器名称
   virtual const char* name() const noexcept = 0;
+    
   // 对请求进行过滤处理
   virtual Result OnIncomingRequest(const Context::Ptr& ctx) = 0;
+    
   // 对回应进行处理，只能回应头进行处理
   virtual void OnOutgingResponse(const Context::Ptr& ctx,
                                  boost::beast::http::response_header<>& resp) {}
-  static const char* GetResultString(Result ret) noexcept {
-    switch (ret) {
-      case Result::kPassed:
-        return "Passed";
-      case Result::kResponded:
-        return "Responsed";
-    }
-    return "";
-  }
 };
 ```
 
@@ -82,7 +94,7 @@ class AuthorizationFilter : public http::Filter {
 };
 ```
 
-# Example
+# Restful服务示例
 
 ```c++
 #include <netkit/http/cors_filter.h>

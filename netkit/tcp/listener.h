@@ -25,7 +25,7 @@ class Listener {
         boost::asio::socket_base::reuse_address(reuse_address));
     acceptor_.bind(endpoint);
     acceptor_.listen();
-    TRACE_OBJ(kTag) << "Listen at " << address << ":" << port << std::endl;
+    TRACE_OBJ(kTag) << "Listen at " << endpoint << std::endl;
     DoAccept(std::forward<Handler>(handler));
   }
 
