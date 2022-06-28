@@ -12,6 +12,8 @@ class BasicServer : public std::enable_shared_from_this<BasicServer<T>> {
   static constexpr const char* kTag = "http.BasicServer";
 
  public:
+  using Ptr = std::shared_ptr<Self>;
+
   explicit BasicServer(IoContextPool& pool) noexcept : listener_(pool) {
     static_assert(std::is_same_v<T, PlainConnection>,
                   "The connection type must be <PlainConnection>");
