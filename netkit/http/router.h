@@ -349,10 +349,10 @@ class BasicRouter {
       for (auto& str : vec) {
         std::string k, v;
         if (SplitKeyValue(str, k, v)) {
-          ToLower(k);
+          util::ToLower(k);
           capture_params.emplace_back(k);
         } else {
-          ToLower(str);
+          util::ToLower(str);
           capture_params.emplace_back(str);
         }
       }
@@ -360,7 +360,7 @@ class BasicRouter {
       path = target;
     }
 
-    ToLower(path);
+    util::ToLower(path);
     const std::regex regex("\\{([^/]*)\\}");
 
     std::size_t path_arg_num = 0;
@@ -401,7 +401,7 @@ class BasicRouter {
     }
 
     for (auto& method : allowed_methods) {
-      ToUpper(method);
+      util::ToUpper(method);
     }
 
     item_ptr->AddHandleFunc(path_arg_num, allowed_methods, capture_params,
@@ -412,7 +412,7 @@ class BasicRouter {
                        std::cmatch& results) noexcept {
     RouteItem* item_ptr = nullptr;
     std::string lowered_path(path, size);
-    ToLower(lowered_path);
+    util::ToLower(lowered_path);
     auto it = route_map_.find(lowered_path);
     if (it != route_map_.end()) {
       item_ptr = &it->second;
@@ -471,7 +471,7 @@ class BasicRouter {
         if (IsNeedDecode(val)) {
           val = DecodeData(val);
         }
-        ToLower(key);
+        util::ToLower(key);
         arg_map.insert(std::make_pair(std::move(key), std::move(val)));
       }
     }

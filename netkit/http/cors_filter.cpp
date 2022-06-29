@@ -58,7 +58,7 @@ CorsFilter& CorsFilter::set_allow_origins(
     if (pos != std::string::npos) {
       origin = origin.substr(0, pos);
     }
-    ToLower(origin);
+    util::ToLower(origin);
   }
   return *this;
 }
@@ -68,7 +68,7 @@ CorsFilter& CorsFilter::set_allow_headers(
   allow_headers_ = allow_headers;
   allow_headers_string_ = "";
   for (auto& header : allow_headers_) {
-    ToLower(header);
+    util::ToLower(header);
     allow_headers_string_.append(header);
     allow_headers_string_.append(",");
   }
@@ -83,7 +83,7 @@ CorsFilter& CorsFilter::set_allow_methods(
   allow_methods_ = allow_methods;
   allow_methods_string_ = "";
   for (auto& method : allow_methods_) {
-    ToUpper(method);
+    util::ToUpper(method);
     allow_methods_string_.append(method);
     allow_methods_string_.append(",");
   }
@@ -158,7 +158,7 @@ std::string CorsFilter::VerifyOrigin(boost::beast::string_view origin) const {
     } else {
       allowed_origin = origin.to_string();
     }
-    ToLower(allowed_origin);
+    util::ToLower(allowed_origin);
     const auto it = std::find_if(allow_origins_.begin(), allow_origins_.end(),
                                  [&allowed_origin](const std::string& item) {
                                    return item == allowed_origin;
@@ -181,7 +181,7 @@ std::string CorsFilter::Preflight(
   }
   {
     auto req_method = request_method.to_string();
-    ToUpper(req_method);
+    util::ToUpper(req_method);
     const auto it = std::find_if(allow_methods_.begin(), allow_methods_.end(),
                                  [&req_method](const std::string& method) {
                                    return method == req_method;
@@ -192,8 +192,8 @@ std::string CorsFilter::Preflight(
   }
   if (!allow_any_headers_ && request_headers.size() > 0) {
     auto req_headers = request_headers.to_string();
-    TrimAllSpace(req_headers);
-    ToLower(req_headers);
+    util::TrimAllSpace(req_headers);
+    util::ToLower(req_headers);
     std::vector<std::string> vec;
     boost::split(vec, req_headers, boost::is_any_of(","));
     for (const auto& header : vec) {

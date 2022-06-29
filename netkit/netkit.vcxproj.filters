@@ -60,6 +60,9 @@
     <ClInclude Include="http\client.h">
       <Filter>头文件\http</Filter>
     </ClInclude>
+    <ClInclude Include="http\auth.h">
+      <Filter>头文件\http</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="http\context.cpp">
@@ -67,6 +70,12 @@
     </ClCompile>
     <ClCompile Include="http\cors_filter.cpp">
       <Filter>源文件\http</Filter>
+    </ClCompile>
+    <ClCompile Include="http\auth.cpp">
+      <Filter>源文件\http</Filter>
+    </ClCompile>
+    <ClCompile Include="utilty.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -148,6 +148,7 @@
     <ClInclude Include="http\router.h" />
     <ClInclude Include="http\server.h" />
     <ClInclude Include="http\settings.h" />
+    <ClInclude Include="http\auth.h" />
     <ClInclude Include="io_context_pool.h" />
     <ClInclude Include="tcp\listener.h" />
     <ClInclude Include="trace_log.h" />
@@ -156,6 +157,8 @@
   <ItemGroup>
     <ClCompile Include="http\context.cpp" />
     <ClCompile Include="http\cors_filter.cpp" />
+    <ClCompile Include="http\auth.cpp" />
+    <ClCompile Include="utilty.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
