@@ -20,10 +20,7 @@ class BasicClient {
   template <class ReqBody, class RespBody>
   void SendRequest(boost::beast::http::request<ReqBody>& req,
                    boost::beast::http::response<RespBody>& resp) {
-    req.set(boost::beast::http::field::host, host_ + ":" + port_);
-    for (const auto& pair : add_headers_) {
-      req.set(pair.first, pair.second);
-    }
+    AddRequestHeaders(req);
     DoRequest(req, resp);
   }
 
@@ -36,14 +33,22 @@ class BasicClient {
  private:
   T& Derived() noexcept { return static_cast<T&>(*this); }
 
+  template <class ReqBody>
+  void AddRequestHeaders(boost::beast::http::request<ReqBody>& req) {
+    req.set(boost::beast::http::field::host, host_ + ":" + port_);
+    for (const auto& pair : add_headers_) {
+      req.set(pair.first, pair.second);
+    }
+  }
+
   template <class ReqBody, class RespBody>
   void DoRequest(boost::beast::http::request<ReqBody>& req,
                  boost::beast::http::response<RespBody>& resp) {
-    bool retry = connected_;
     if (!connected_) {
       const auto results = resolver_.resolve(host_, port_);
       Derived().DoConnect(results);
     }
+    bool retry = connected_;
     bool success = false;
     try {
       auto& stream = Derived().stream();
@@ -52,15 +57,18 @@ class BasicClient {
       success = true;
     } catch (const std::exception&) {
       Close();
-      if (!retry) throw;
+      if (!retry) {
+        throw;
+      }
     }
     if (!success) {
       DoRequest(req, resp);  // retry
-    }
-    if (req.need_eof() || resp.need_eof()) {
-      Close();
     } else {
-      connected_ = true;
+      if (req.need_eof() || resp.need_eof()) {
+        Close();
+      } else {
+        connected_ = true;
+      }
     }
   }
 
