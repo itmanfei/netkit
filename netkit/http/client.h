@@ -20,7 +20,10 @@ class BasicClient {
   template <class ReqBody, class RespBody>
   void SendRequest(boost::beast::http::request<ReqBody>& req,
                    boost::beast::http::response<RespBody>& resp) {
-    AddRequestHeaders(req);
+    req.set(boost::beast::http::field::host, host_ + ":" + port_);
+    for (const auto& pair : add_headers_) {
+      req.set(pair.first, pair.second);
+    }
     DoRequest(req, resp);
   }
 
@@ -33,17 +36,10 @@ class BasicClient {
  private:
   T& Derived() noexcept { return static_cast<T&>(*this); }
 
-  template <class ReqBody>
-  void AddRequestHeaders(boost::beast::http::request<ReqBody>& req) {
-    req.set(boost::beast::http::field::host, host_ + ":" + port_);
-    for (const auto& pair : add_headers_) {
-      req.set(pair.first, pair.second);
-    }
-  }
-
   template <class ReqBody, class RespBody>
   void DoRequest(boost::beast::http::request<ReqBody>& req,
                  boost::beast::http::response<RespBody>& resp) {
+    resp = {};
     if (!connected_) {
       const auto results = resolver_.resolve(host_, port_);
       Derived().DoConnect(results);

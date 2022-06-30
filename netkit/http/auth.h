@@ -41,19 +41,30 @@ std::string MakeDigestMd5Response(const std::string& realm,
                                   const std::string& nonce) noexcept;
 
 // for auth
-std::string MakeDigestMd5Response(const std::string& realm,
-                                  const std::string& username,
-                                  const std::string& password,
-                                  const std::string& method,
-                                  const std::string& uri,
-                                  const std::string& nonce, std::uint32_t nc,
-                                  const std::string& cnonce) noexcept;
+std::string MakeDigestMd5Response(
+    const std::string& realm, const std::string& username,
+    const std::string& password, const std::string& method,
+    const std::string& uri, const std::string& nonce, std::uint32_t nonce_count,
+    const std::string& cnonce) noexcept;
 
 // for auth-int
 std::string MakeDigestMd5Response(
     const std::string& realm, const std::string& username,
     const std::string& password, const std::string& method,
     const std::string& uri, const std::string& body, const std::string& nonce,
-    std::uint32_t nc, const std::string& cnonce) noexcept;
+    std::uint32_t nonce_count, const std::string& cnonce) noexcept;
+
+std::string MakeDigestAuthorizationString(
+    const std::string& username, const std::string& realm,
+    const std::string& nonce, const std::string& uri,
+    const std::string& response, const std::string& algorithm,
+    const std::optional<std::string>& opaque) noexcept;
+
+std::string MakeDigestAuthorizationString(
+    const std::string& username, const std::string& realm,
+    const std::string& nonce, std::uint32_t nonce_count, const std::string& uri,
+    const std::string& response, const std::string& algorithm,
+    const std::string& qop, const std::optional<std::string>& opaque,
+    const std::string& cnonce) noexcept;
 
 }  // namespace netkit::http

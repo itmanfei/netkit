@@ -1,5 +1,6 @@
 #include "auth.h"
 
+#include <sstream>
 #include <string_view>
 
 #include "../utility.h"
@@ -129,18 +130,16 @@ std::string MakeDigestMd5Response(const std::string& realm,
   return util::MakeMd5(ha1 + ":" + nonce + ":" + ha2);
 }
 
-std::string MakeDigestMd5Response(const std::string& realm,
-                                  const std::string& username,
-                                  const std::string& password,
-                                  const std::string& method,
-                                  const std::string& uri,
-                                  const std::string& nonce, std::uint32_t nc,
-                                  const std::string& cnonce) noexcept {
-  char nc_buf[10] = {0};
-  snprintf(nc_buf, sizeof(nc_buf), "%08x", nc);
+std::string MakeDigestMd5Response(
+    const std::string& realm, const std::string& username,
+    const std::string& password, const std::string& method,
+    const std::string& uri, const std::string& nonce, std::uint32_t nonce_count,
+    const std::string& cnonce) noexcept {
+  char nc_hex[10] = {0};
+  snprintf(nc_hex, sizeof(nc_hex), "%08x", nonce_count);
   auto ha1 = util::MakeMd5(username + ":" + realm + ":" + password);
   auto ha2 = util::MakeMd5(method + ":" + uri);
-  return util::MakeMd5(ha1 + ":" + nonce + ":" + nc_buf + ":" + cnonce +
+  return util::MakeMd5(ha1 + ":" + nonce + ":" + nc_hex + ":" + cnonce +
                        ":auth:" + ha2);
 }
 
@@ -148,13 +147,47 @@ std::string MakeDigestMd5Response(
     const std::string& realm, const std::string& username,
     const std::string& password, const std::string& method,
     const std::string& uri, const std::string& body, const std::string& nonce,
-    std::uint32_t nc, const std::string& cnonce) noexcept {
-  char nc_buf[10] = {0};
-  snprintf(nc_buf, sizeof(nc_buf), "%08x", nc);
+    std::uint32_t nonce_count, const std::string& cnonce) noexcept {
+  char nc_hex[10] = {0};
+  snprintf(nc_hex, sizeof(nc_hex), "%08x", nonce_count);
   auto ha1 = util::MakeMd5(username + ":" + realm + ":" + password);
   auto ha2 = util::MakeMd5(method + ":" + uri + ":" + util::MakeMd5(body));
-  return util::MakeMd5(ha1 + ":" + nonce + ":" + nc_buf + ":" + cnonce +
-                       ":auth:" + ha2);
+  return util::MakeMd5(ha1 + ":" + nonce + ":" + nc_hex + ":" + cnonce +
+                       ":auth-int:" + ha2);
+}
+
+std::string MakeDigestAuthorizationString(
+    const std::string& username, const std::string& realm,
+    const std::string& nonce, const std::string& uri,
+    const std::string& response, const std::string& algorithm,
+    const std::optional<std::string>& opaque) noexcept {
+  std::ostringstream oss;
+  oss << "Digest username=\"" << username << "\", realm=\"" << realm
+      << "\", nonce=\"" << nonce << "\", uri=\"" << uri << "\", response=\""
+      << response << "\", algorithm=" << algorithm;
+  if (opaque) {
+    oss << ", opaque=\"" << *opaque << "\"";
+  }
+  return oss.str();
+}
+
+std::string MakeDigestAuthorizationString(
+    const std::string& username, const std::string& realm,
+    const std::string& nonce, std::uint32_t nonce_count, const std::string& uri,
+    const std::string& response, const std::string& algorithm,
+    const std::string& qop, const std::optional<std::string>& opaque,
+    const std::string& cnonce) noexcept {
+  char nc_hex[10] = {0};
+  snprintf(nc_hex, sizeof(nc_hex), "%08x", nonce_count);
+  std::ostringstream oss;
+  oss << "Digest username=\"" << username << "\", realm=\"" << realm
+      << "\", nonce=\"" << nonce << "\", nc=" << nc_hex << ", uri=\"" << uri
+      << "\", response=\"" << response << "\", algorithm=" << algorithm
+      << ", qop=" << qop << ", cnonce=\"" << cnonce << "\"";
+  if (opaque) {
+    oss << ", opaque=\"" << *opaque << "\"";
+  }
+  return oss.str();
 }
 
 }  // namespace netkit::http
