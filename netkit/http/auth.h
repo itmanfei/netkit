@@ -33,22 +33,24 @@ static inline WwwAuthenticateInfo ParseWwwAuthenticateString(
 }
 
 // for no qop
-std::string MakeWwwAuthenticateResponse(const std::string& realm,
-                                        const std::string& username,
-                                        const std::string& password,
-                                        const std::string& method,
-                                        const std::string& uri,
-                                        const std::string& nonce) noexcept;
+std::string MakeDigestMd5Response(const std::string& realm,
+                                  const std::string& username,
+                                  const std::string& password,
+                                  const std::string& method,
+                                  const std::string& uri,
+                                  const std::string& nonce) noexcept;
 
 // for auth
-std::string MakeWwwAuthenticateResponse(
-    const std::string& realm, const std::string& username,
-    const std::string& password, const std::string& method,
-    const std::string& uri, const std::string& nonce, std::uint32_t nc,
-    const std::string& cnonce) noexcept;
+std::string MakeDigestMd5Response(const std::string& realm,
+                                  const std::string& username,
+                                  const std::string& password,
+                                  const std::string& method,
+                                  const std::string& uri,
+                                  const std::string& nonce, std::uint32_t nc,
+                                  const std::string& cnonce) noexcept;
 
 // for auth-int
-std::string MakeWwwAuthenticateResponse(
+std::string MakeDigestMd5Response(
     const std::string& realm, const std::string& username,
     const std::string& password, const std::string& method,
     const std::string& uri, const std::string& body, const std::string& nonce,

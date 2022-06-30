@@ -137,6 +137,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="test_http_client.cpp" />
     <ClCompile Include="test_http_router.cpp" />
     <ClCompile Include="test_http_server.cpp" />
     <ClCompile Include="test_tcp_listener.cpp" />

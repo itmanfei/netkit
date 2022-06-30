@@ -3,7 +3,6 @@
 #include <netkit/http/filter.h>
 #include <netkit/http/router.h>
 #include <netkit/http/settings.h>
-#include <netkit/trace_log.h>
 
 #include <boost/beast/ssl.hpp>
 #include <memory>
@@ -14,16 +13,13 @@ template <class T>
 class BasicConnection {
   friend class Context;
   using Self = BasicConnection;
-  static constexpr const char* kTag = "http.BasicConnection";
 
  public:
   BasicConnection(boost::beast::flat_buffer&& buffer, Settings& settings,
                   Router& router) noexcept
-      : buffer_(std::move(buffer)), settings_(settings), router_(router) {
-    TRACE_OBJ(kTag) << "Create" << std::endl;
-  }
+      : buffer_(std::move(buffer)), settings_(settings), router_(router) {}
 
-  ~BasicConnection() noexcept { TRACE_OBJ(kTag) << "Destory" << std::endl; }
+  ~BasicConnection() noexcept {}
 
  protected:
   T& Derived() noexcept { return static_cast<T&>(*this); }
@@ -53,7 +49,6 @@ class BasicConnection {
                     std::size_t bytes_transferred) {
     boost::ignore_unused(bytes_transferred);
     if (ec) {
-      TRACE_OBJ(kTag) << "Read header " << ec << std::endl;
       if (ec == boost::beast::http::error::end_of_stream) {
         Derived().DoEof();
       }
@@ -148,8 +143,6 @@ class BasicConnection {
         ExpiresAfter(settings_.read_timeout());
         ReadHeader();
       }
-    } else {
-      TRACE_OBJ(kTag) << "Write " << ec << std::endl;
     }
   }
 
@@ -163,19 +156,15 @@ class BasicConnection {
 
 class PlainConnection : public BasicConnection<PlainConnection>,
                         public std::enable_shared_from_this<PlainConnection> {
-  static constexpr const char* kTag = "http.PlainConnection";
-
  public:
   PlainConnection(boost::beast::tcp_stream&& stream,
                   boost::asio::ssl::context& ssl_ctx,
                   boost::beast::flat_buffer&& buffer, Settings& settings,
                   Router& router) noexcept
       : BasicConnection(std::move(buffer), settings, router),
-        stream_(std::move(stream)) {
-    TRACE_OBJ(kTag) << "Create" << std::endl;
-  }
+        stream_(std::move(stream)) {}
 
-  ~PlainConnection() noexcept { TRACE_OBJ(kTag) << "Destory" << std::endl; }
+  ~PlainConnection() noexcept {}
 
   void Run() { ReadHeader(); }
 
@@ -184,9 +173,6 @@ class PlainConnection : public BasicConnection<PlainConnection>,
   void DoEof() {
     boost::beast::error_code ec;
     stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-    if (ec) {
-      TRACE_OBJ(kTag) << "Shotdown " << ec << std::endl;
-    }
   }
 
  private:
@@ -196,7 +182,6 @@ class PlainConnection : public BasicConnection<PlainConnection>,
 class SslConnection : public BasicConnection<SslConnection>,
                       public std::enable_shared_from_this<SslConnection> {
   using Self = SslConnection;
-  static constexpr const char* kTag = "http.SslConnection";
 
  public:
   SslConnection(boost::beast::tcp_stream&& stream,
@@ -204,11 +189,9 @@ class SslConnection : public BasicConnection<SslConnection>,
                 boost::beast::flat_buffer&& buffer, Settings& settings,
                 Router& router) noexcept
       : BasicConnection(std::move(buffer), settings, router),
-        stream_(std::move(stream), ssl_ctx) {
-    TRACE_OBJ(kTag) << "Create" << std::endl;
-  }
+        stream_(std::move(stream), ssl_ctx) {}
 
-  ~SslConnection() noexcept { TRACE_OBJ(kTag) << "Destory" << std::endl; }
+  ~SslConnection() noexcept {}
 
   void Run() {
     stream_.async_handshake(
@@ -230,16 +213,10 @@ class SslConnection : public BasicConnection<SslConnection>,
     if (!ec) {
       buffer_.consume(bytes_used);
       ReadHeader();
-    } else {
-      TRACE_OBJ(kTag) << "Handshake " << ec << std::endl;
     }
   }
 
-  void OnShutdown(const boost::beast::error_code& ec) {
-    if (ec) {
-      TRACE_OBJ(kTag) << "Shotdown " << ec << std::endl;
-    }
-  }
+  void OnShutdown(const boost::beast::error_code& ec) {}
 
  private:
   boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
@@ -247,7 +224,6 @@ class SslConnection : public BasicConnection<SslConnection>,
 
 class DetectConnection : public std::enable_shared_from_this<DetectConnection> {
   using Self = DetectConnection;
-  static constexpr const char* kTag = "http.DetectConnection";
 
  public:
   DetectConnection(boost::beast::tcp_stream&& stream,
@@ -257,11 +233,9 @@ class DetectConnection : public std::enable_shared_from_this<DetectConnection> {
       : stream_(std::move(stream)),
         ssl_ctx_(ssl_ctx),
         settings_(settings),
-        router_(router) {
-    TRACE_OBJ(kTag) << "Create" << std::endl;
-  }
+        router_(router) {}
 
-  ~DetectConnection() noexcept { TRACE_OBJ(kTag) << "Destory" << std::endl; }
+  ~DetectConnection() noexcept {}
 
   void Run() {
     boost::beast::async_detect_ssl(
@@ -281,8 +255,6 @@ class DetectConnection : public std::enable_shared_from_this<DetectConnection> {
                                           router_)
             ->Run();
       }
-    } else {
-      TRACE_OBJ(kTag) << "Detect " << ec << std::endl;
     }
   }
 

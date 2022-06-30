@@ -27,6 +27,8 @@ int main() {
 
     std::thread([&pool]() { pool.Run(); }).detach();
 
+    TestHttpClient(stop.get_token(), pool);
+
     TestTcpListener(stop.get_token(), pool, "0.0.0.0", 12345);
 
     TestHttpRouter(stop.get_token());

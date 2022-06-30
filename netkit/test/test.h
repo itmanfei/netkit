@@ -13,3 +13,5 @@ void TestHttpRouter(std::stop_token st);
 
 void TestHttpServer(std::stop_token st, IoContextPool& pool,
                     const std::string& address, std::uint16_t port);
+
+void TestHttpClient(std::stop_token st, IoContextPool& pool);

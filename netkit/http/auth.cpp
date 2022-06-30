@@ -118,22 +118,24 @@ WwwAuthenticateInfo ParseWwwAuthenticateString(std::string_view www) noexcept {
   return info;
 }
 
-std::string MakeWwwAuthenticateResponse(const std::string& realm,
-                                        const std::string& username,
-                                        const std::string& password,
-                                        const std::string& method,
-                                        const std::string& uri,
-                                        const std::string& nonce) noexcept {
+std::string MakeDigestMd5Response(const std::string& realm,
+                                  const std::string& username,
+                                  const std::string& password,
+                                  const std::string& method,
+                                  const std::string& uri,
+                                  const std::string& nonce) noexcept {
   auto ha1 = util::MakeMd5(username + ":" + realm + ":" + password);
   auto ha2 = util::MakeMd5(method + ":" + uri);
   return util::MakeMd5(ha1 + ":" + nonce + ":" + ha2);
 }
 
-std::string MakeWwwAuthenticateResponse(
-    const std::string& realm, const std::string& username,
-    const std::string& password, const std::string& method,
-    const std::string& uri, const std::string& nonce, std::uint32_t nc,
-    const std::string& cnonce) noexcept {
+std::string MakeDigestMd5Response(const std::string& realm,
+                                  const std::string& username,
+                                  const std::string& password,
+                                  const std::string& method,
+                                  const std::string& uri,
+                                  const std::string& nonce, std::uint32_t nc,
+                                  const std::string& cnonce) noexcept {
   char nc_buf[10] = {0};
   snprintf(nc_buf, sizeof(nc_buf), "%08x", nc);
   auto ha1 = util::MakeMd5(username + ":" + realm + ":" + password);
@@ -142,7 +144,7 @@ std::string MakeWwwAuthenticateResponse(
                        ":auth:" + ha2);
 }
 
-std::string MakeWwwAuthenticateResponse(
+std::string MakeDigestMd5Response(
     const std::string& realm, const std::string& username,
     const std::string& password, const std::string& method,
     const std::string& uri, const std::string& body, const std::string& nonce,

@@ -54,9 +54,6 @@
     <ClInclude Include="utility.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="trace_log.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="http\client.h">
       <Filter>头文件\http</Filter>
     </ClInclude>

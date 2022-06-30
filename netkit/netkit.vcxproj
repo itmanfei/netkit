@@ -151,7 +151,6 @@
     <ClInclude Include="http\auth.h" />
     <ClInclude Include="io_context_pool.h" />
     <ClInclude Include="tcp\listener.h" />
-    <ClInclude Include="trace_log.h" />
     <ClInclude Include="utility.h" />
   </ItemGroup>
   <ItemGroup>

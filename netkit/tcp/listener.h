@@ -5,15 +5,12 @@ namespace netkit::tcp {
 
 class Listener {
   using Self = Listener;
-  static constexpr const char* kTag = "tcp.Listener";
 
  public:
   explicit Listener(IoContextPool& pool) noexcept
-      : pool_(pool), socket_(pool.Get()), acceptor_(pool.Get()) {
-    TRACE_OBJ(kTag) << "Create" << std::endl;
-  }
+      : pool_(pool), socket_(pool.Get()), acceptor_(pool.Get()) {}
 
-  ~Listener() noexcept { TRACE_OBJ(kTag) << "Destory" << std::endl; }
+  ~Listener() noexcept {}
 
   template <class Handler>
   void ListenAndAccept(const std::string& address, std::uint16_t port,
@@ -25,7 +22,6 @@ class Listener {
         boost::asio::socket_base::reuse_address(reuse_address));
     acceptor_.bind(endpoint);
     acceptor_.listen();
-    TRACE_OBJ(kTag) << "Listen at " << endpoint << std::endl;
     DoAccept(std::forward<Handler>(handler));
   }
 
@@ -44,11 +40,7 @@ class Listener {
   template <class Handler>
   void OnAccept(Handler&& handler, const boost::system::error_code& ec) {
     if (!ec) {
-      TRACE_OBJ(kTag) << "Client incoming from " << socket_.remote_endpoint()
-                      << std::endl;
       handler(std::move(socket_));
-    } else {
-      TRACE_OBJ(kTag) << "Accept " << ec << std::endl;
     }
     if (acceptor_.is_open()) {
       socket_ = boost::asio::ip::tcp::socket(pool_.Get());
@@ -57,7 +49,6 @@ class Listener {
   }
 
   void DoClose() noexcept {
-    TRACE_OBJ(kTag) << "Close" << std::endl;
     boost::system::error_code ec;
     acceptor_.cancel(ec);
     acceptor_.close(ec);

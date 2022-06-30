@@ -1,6 +1,5 @@
 #include <netkit/http/context.h>
 #include <netkit/http/router.h>
-#include <netkit/trace_log.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -11,26 +10,25 @@ using namespace netkit;
 using HttpContextPtr = std::shared_ptr<netkit::http::Context>;
 using Router = netkit::http::Router;
 
-static constexpr const char* kTag = "http.Server.Test";
 static std::string funcname;
 
 static void OnHello(const HttpContextPtr& ctx) {
   funcname = __FUNCTION__;
-  TRACE_TEST(kTag) << __FUNCTION__ << std::endl;
+  std::cout << __FUNCTION__ << std::endl;
 }
 
 static void OnHelloPath(const HttpContextPtr& ctx, const std::string& name) {
   funcname = __FUNCTION__;
-  TRACE_TEST(kTag) << __FUNCTION__ << " name=" << name << std::endl;
+  std::cout << __FUNCTION__ << " name=" << name << std::endl;
 }
 
 static void OnHelloArg(const HttpContextPtr& ctx, const std::string& name,
                        const std::optional<std::string>& nick_name,
                        std::int32_t age) {
   funcname = __FUNCTION__;
-  TRACE_TEST(kTag) << __FUNCTION__ << " name=" << name
-                   << " nick_name=" << (nick_name ? nick_name->c_str() : "")
-                   << " age=" << age << std::endl;
+  std::cout << __FUNCTION__ << " name=" << name
+            << " nick_name=" << (nick_name ? nick_name->c_str() : "")
+            << " age=" << age << std::endl;
 }
 
 void TestHttpRouter(std::stop_token st) {
@@ -42,12 +40,12 @@ void TestHttpRouter(std::stop_token st) {
     router.AddRoute("/hello/{name}", &OnHelloPath, {"GET"});
     router.AddRoute("/hello", &OnHello, {"GET", "POST"});
   } catch (const std::exception& e) {
-    TRACE_TEST(kTag) << e.what() << std::endl;
+    std::cout << e.what() << std::endl;
     throw;
   }
 
   struct UrlFunc {
-    const char* methpd;
+    const char* method;
     const char* url;
     const char* func;
   };
@@ -81,12 +79,12 @@ void TestHttpRouter(std::stop_token st) {
     funcname = "";
     const auto idx = std::rand() % (sizeof(kUrls) / sizeof(UrlFunc));
     const auto& item = kUrls[idx];
-    TRACE_TEST(kTag) << "-----------------" << std::endl;
-    TRACE_TEST(kTag) << item.methpd << " " << item.url << std::endl;
+    std::cout << "-----------------" << std::endl;
+    std::cout << item.method << " " << item.url << std::endl;
     try {
-      router.Routing(ctx, item.methpd, item.url);
+      router.Routing(ctx, item.method, item.url);
     } catch (const std::exception& e) {
-      TRACE_TEST(kTag) << e.what() << std::endl;
+      std::cout << e.what() << std::endl;
     }
     if (item.func != funcname) {
       throw std::runtime_error(funcname);
