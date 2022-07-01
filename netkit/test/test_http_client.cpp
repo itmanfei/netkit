@@ -1,5 +1,5 @@
-#include <netkit/http/auth.h>
 #include <netkit/http/client.h>
+#include <netkit/http/digest_auth.h>
 #include <netkit/io_context_pool.h>
 
 #include <boost/json.hpp>
@@ -10,7 +10,7 @@ using namespace netkit;
 void TestHttpClient(std::stop_token st, IoContextPool& pool) {
   const std::string username = "admin";
   const std::string password = "123456";
-  const std::string cnonde = "abce12346";
+  const std::string cnonce = "abce12346";
   const std::string device_id = "51010700011209155082";
   const std::string url = "/VIID/System/Register";
   http::PlainClient client(pool.Get(), "192.168.20.142", 8003);
@@ -26,16 +26,26 @@ void TestHttpClient(std::stop_token st, IoContextPool& pool) {
   std::cout << resp << std::endl;
   if (resp.result_int() == 401) {
     const auto www = resp[boost::beast::http::field::www_authenticate];
-    const auto info = http::ParseWwwAuthenticateString(www.data(), www.size());
-    assert(info.success);
-    const auto response = http::MakeDigestMd5Response(
-        info.realm, username, password, "POST", url, info.nonce, 1, cnonde);
-    const auto auth_str = http::MakeDigestAuthorizationString(
-        username, info.realm, info.nonce, 1, url, response, info.algorithm,
-        "auth", info.opaque, cnonde);
-    req.set(boost::beast::http::field::authorization, auth_str);
-    client.SendRequest(req, resp);
-    std::cout << resp << std::endl;
+    if (www.starts_with("Digest ")) {
+      http::WwwAuthenticateDigest www_digest;
+      if (www_digest.ParseFromString(www.data(), www.size())) {
+        http::AuthorizationDigest auth_digest;
+        auth_digest.cnonce = cnonce;
+        auth_digest.nonce = www_digest.nonce;
+        auth_digest.nc = 1;
+        auth_digest.opaque = www_digest.opaque;
+        auth_digest.qop = "auth";
+        auth_digest.realm = www_digest.realm;
+        auth_digest.response =
+            www_digest.MakeResponse(username, password, "POST", url, 1, cnonce);
+        auth_digest.uri = url;
+        auth_digest.username = username;
+        req.set(boost::beast::http::field::authorization,
+                auth_digest.ToString());
+        client.SendRequest(req, resp);
+        std::cout << resp << std::endl;
+      }
+    }
   }
   while (!st.stop_requested()) {
     using namespace std::chrono_literals;
