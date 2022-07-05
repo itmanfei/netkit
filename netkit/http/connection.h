@@ -63,11 +63,11 @@ class BasicConnection {
         }
       }
       try {
-        const auto method = parser_->get().method_string();
-        const auto target = parser_->get().target();
+        auto method = parser_->get().method_string();
+        auto target = parser_->get().target();
         router_.Routing(ctx, method.to_string(),
                         std::string_view(target.data(), target.size()));
-      } catch (const std::exception& e) {
+      } catch (std::exception& e) {
         return ctx->BadRequest(e.what(), "text/plain", false);
       }
     }
@@ -118,8 +118,6 @@ class BasicConnection {
     if (!resp.has_content_length() && !resp.chunked()) {
       resp.content_length(0);
     }
-    const auto method = parser_->get().method_string();
-    const auto target = parser_->get().target();
     for (const auto& filter : settings_.filters()) {
       filter->OnOutgingResponse(ctx, resp);
     }

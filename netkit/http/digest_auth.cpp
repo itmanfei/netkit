@@ -33,7 +33,7 @@ std::string AuthorizationDigest::ToString() const noexcept {
 
 bool AuthorizationDigest::ParseFromString(std::string_view str) noexcept {
   do {
-    const auto npos = std::string_view::npos;
+    auto npos = std::string_view::npos;
     auto pos1 = str.find("username=\"");
     if (pos1 == npos) break;
     auto pos2 = str.find('"', pos1 + 10);
@@ -111,7 +111,7 @@ bool AuthorizationDigest::ParseFromString(std::string_view str) noexcept {
         }
         try {
           nc = std::stoul(nc_hex, nullptr, 16);
-        } catch (const std::exception&) {
+        } catch (std::exception&) {
           nc = 0;
           break;
         }
@@ -158,7 +158,7 @@ std::string WwwAuthenticateDigest::ToString() const noexcept {
 
 bool WwwAuthenticateDigest::ParseFromString(std::string_view str) noexcept {
   do {
-    const auto npos = std::string_view::npos;
+    auto npos = std::string_view::npos;
     auto pos1 = str.find("realm=\"");
     if (pos1 == npos) break;
     auto pos2 = str.find('"', pos1 + 7);
@@ -170,8 +170,8 @@ bool WwwAuthenticateDigest::ParseFromString(std::string_view str) noexcept {
       pos2 = str.find('"', pos1 + 8);
       if (pos2 == npos) break;
       std::string uri;
-      const auto sub = str.substr(pos1 + 8, pos2 - pos1 - 8);
-      for (const auto c : sub) {
+      auto sub = str.substr(pos1 + 8, pos2 - pos1 - 8);
+      for (auto c : sub) {
         if (c != ' ') {
           uri.push_back(c);
         } else {
@@ -237,8 +237,8 @@ bool WwwAuthenticateDigest::ParseFromString(std::string_view str) noexcept {
       pos2 = str.find('"', pos1 + 5);
       if (pos2 == npos) break;
       std::string qop;
-      const auto sub = str.substr(pos1 + 5, pos2 - pos1 - 5);
-      for (const auto c : sub) {
+      auto sub = str.substr(pos1 + 5, pos2 - pos1 - 5);
+      for (auto c : sub) {
         if (c != ',') {
           qop.push_back(c);
         } else {

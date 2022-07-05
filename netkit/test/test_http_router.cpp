@@ -39,18 +39,18 @@ void TestHttpRouter(std::stop_token st) {
     router.AddRoute("/hello?name&nick_name&age", &OnHelloArg, {"GET"});
     router.AddRoute("/hello/{name}", &OnHelloPath, {"GET"});
     router.AddRoute("/hello", &OnHello, {"GET", "POST"});
-  } catch (const std::exception& e) {
+  } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
     throw;
   }
 
-  struct UrlFunc {
+  struct UrlMapping {
     const char* method;
     const char* url;
     const char* func;
   };
 
-  UrlFunc kUrls[] = {
+  UrlMapping kUrls[] = {
       {"GET", "/hello", "OnHello"},
       {"GET", "/hello?name=xxx&age=34", "OnHelloArg"},
       {"GET", "/hello?nick_name=xxx&name=yyy&age=18", "OnHelloArg"},
@@ -77,13 +77,13 @@ void TestHttpRouter(std::stop_token st) {
   std::srand((unsigned int)std::time(nullptr));
   while (!st.stop_requested()) {
     funcname = "";
-    const auto idx = std::rand() % (sizeof(kUrls) / sizeof(UrlFunc));
-    const auto& item = kUrls[idx];
+    auto idx = std::rand() % (sizeof(kUrls) / sizeof(UrlMapping));
+    auto& item = kUrls[idx];
     std::cout << "-----------------" << std::endl;
     std::cout << item.method << " " << item.url << std::endl;
     try {
       router.Routing(ctx, item.method, item.url);
-    } catch (const std::exception& e) {
+    } catch (std::exception& e) {
       std::cout << e.what() << std::endl;
     }
     if (item.func != funcname) {

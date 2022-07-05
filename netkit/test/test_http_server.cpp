@@ -11,7 +11,7 @@ class AuthorizationFilter : public http::Filter {
   const char* name() const noexcept override { return "AuthFilter"; }
 
   Result OnIncomingRequest(const http::Context::Ptr& ctx) override {
-    const auto& req = ctx->parser().get();
+    auto& req = ctx->parser().get();
     if (req.target() == "/user/login") {
       return Result::kPassed;
     }
@@ -35,13 +35,13 @@ static void AddChannel(const http::Context::Ptr& ctx) {
   if (!ctx->parser().content_length()) {
     return ctx->LengthRequired();
   }
-  const auto len = *ctx->parser().content_length();
+  auto len = *ctx->parser().content_length();
   auto buf = std::make_shared<char[]>(len);
   ctx->ReadAll(buf.get(), len,
                [ctx, buf, len](const std::error_code& ec, std::size_t) {
                  if (ec) return;
                  std::lock_guard lock(mutex);
-                 const auto id = ++channel_id;
+                 auto id = ++channel_id;
                  channel_map[id] = std::string(buf.get(), len);
                  ctx->Ok(std::to_string(id), "text/plain");
                });
@@ -57,13 +57,13 @@ static void UpdateChannel(const http::Context::Ptr& ctx, std::uint64_t id) {
   if (!ctx->parser().content_length()) {
     return ctx->LengthRequired();
   }
-  const auto len = *ctx->parser().content_length();
+  auto len = *ctx->parser().content_length();
   auto buf = std::make_shared<char[]>(len);
   ctx->ReadAll(buf.get(), len,
                [ctx, buf, len, id](const std::error_code& ec, std::size_t) {
                  if (ec) return;
                  std::lock_guard lock(mutex);
-                 const auto it = channel_map.find(id);
+                 auto it = channel_map.find(id);
                  if (it != channel_map.end()) {
                    it->second = std::string(buf.get(), len);
                  }

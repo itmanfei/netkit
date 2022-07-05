@@ -8,11 +8,11 @@
 using namespace netkit;
 
 void TestHttpClient(std::stop_token st, IoContextPool& pool) {
-  const std::string username = "admin";
-  const std::string password = "123456";
-  const std::string cnonce = "abce12346";
-  const std::string device_id = "51010700011209155082";
-  const std::string url = "/VIID/System/Register";
+  std::string username = "admin";
+  std::string password = "123456";
+  std::string cnonce = "abce12346";
+  std::string device_id = "51010700011209155082";
+  std::string url = "/VIID/System/Register";
   http::PlainClient client(pool.Get(), "192.168.20.142", 8003);
   boost::json::object obj{{"RegisterObject", {{"DeviceID", device_id}}}};
   boost::beast::http::request<boost::beast::http::string_body> req(
@@ -25,7 +25,7 @@ void TestHttpClient(std::stop_token st, IoContextPool& pool) {
   client.SendRequest(req, resp);
   std::cout << resp << std::endl;
   if (resp.result_int() == 401) {
-    const auto www = resp[boost::beast::http::field::www_authenticate];
+    auto www = resp[boost::beast::http::field::www_authenticate];
     if (www.starts_with("Digest ")) {
       http::WwwAuthenticateDigest www_digest;
       if (www_digest.ParseFromString(www.data(), www.size())) {

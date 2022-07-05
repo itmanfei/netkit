@@ -41,7 +41,7 @@ class BasicClient {
                  boost::beast::http::response<RespBody>& resp) {
     resp = {};
     if (!connected_) {
-      const auto results = resolver_.resolve(host_, port_);
+      auto results = resolver_.resolve(host_, port_);
       Derived().DoConnect(results);
     }
     bool retry = connected_;
@@ -51,7 +51,7 @@ class BasicClient {
       boost::beast::http::write(stream, req);
       boost::beast::http::read(stream, buffer_, resp);
       success = true;
-    } catch (const std::exception&) {
+    } catch (std::exception&) {
       Close();
       if (!retry) {
         throw;
@@ -71,8 +71,8 @@ class BasicClient {
  private:
   bool connected_ = false;
   boost::asio::ip::tcp::resolver resolver_;
-  const std::string host_;
-  const std::string port_;
+  std::string host_;
+  std::string port_;
   boost::beast::flat_buffer buffer_;
   std::vector<std::pair<std::string, std::string>> add_headers_;
 };

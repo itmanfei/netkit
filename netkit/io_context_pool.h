@@ -36,7 +36,7 @@ class IoContextPool {
   }
 
   boost::asio::io_context& Get() {
-    const auto index = next_index_++ % contexts_.size();
+    auto index = next_index_++ % contexts_.size();
     return *contexts_[index];
   }
 

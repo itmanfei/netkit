@@ -24,7 +24,7 @@ class Context : public std::enable_shared_from_this<Context> {
 
   template <class T>
   Context(const std::shared_ptr<BasicConnection<T>>& conn,
-          const Parser& parser) noexcept
+          Parser& parser) noexcept
       : conn_(conn), parser_(parser) {}
 
   ~Context() noexcept {}
@@ -169,7 +169,7 @@ class Context : public std::enable_shared_from_this<Context> {
   std::variant<std::shared_ptr<BasicConnection<PlainConnection>>,
                std::shared_ptr<BasicConnection<SslConnection>>>
       conn_;
-  const Parser& parser_;
+  Parser& parser_;
 };
 
 }  // namespace netkit::http

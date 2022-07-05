@@ -30,7 +30,7 @@ struct IsOptional<std::optional<T>> {
 
 template <class S, class K, class V>
 static bool SplitKeyValue(const S& src, K& key, V& val) noexcept {
-  const auto pos = src.find('=');
+  auto pos = src.find('=');
   if (pos != S::npos) {
     key = src.substr(0, pos);
     val = src.substr(pos + 1);
@@ -41,15 +41,14 @@ static bool SplitKeyValue(const S& src, K& key, V& val) noexcept {
 
 template <class S>
 static bool IsNeedDecode(const S& str) noexcept {
-  return std::find_if(str.begin(), str.end(), [](const char c) {
-           return c == '%' || c == '+';
-         }) != str.end();
+  return std::find_if(str.begin(), str.end(),
+                      [](char c) { return c == '%' || c == '+'; }) != str.end();
 }
 
 template <class S>
 static std::string DecodeData(const S& str) noexcept {
   std::string result;
-  const auto len = str.size();
+  auto len = str.size();
   result.reserve(len);
   for (std::size_t i = 0; i < len; ++i) {
     switch (str[i]) {
@@ -295,7 +294,7 @@ class BasicRouter {
       auto binder = std::make_shared<RouteBinder<Function>>(
           path_arg_num, capture_params, std::forward<Function>(func));
       for (const auto& method : allowed_methods) {
-        const auto it = allowed_method_binders_.find(method);
+        auto it = allowed_method_binders_.find(method);
         if (it == allowed_method_binders_.end()) {
           BinderList list;
           list.emplace_back(binder);
@@ -317,7 +316,7 @@ class BasicRouter {
       if (results.size() > 1) {
         path_arg_num = results.size() - 1;
       }
-      const auto it = allowed_method_binders_.find(method);
+      auto it = allowed_method_binders_.find(method);
       assert(it != allowed_method_binders_.end());
       for (const auto& binder : it->second) {
         if (binder->IsMatched(path_arg_num, arg_map)) {
@@ -340,7 +339,7 @@ class BasicRouter {
                 MethodList allowed_methods) {
     std::string path;
     ParamList capture_params;
-    const auto pos = target.find('?');
+    auto pos = target.find('?');
     if (pos != std::string::npos) {
       auto query = target.substr(pos + 1);
       path = target.substr(0, pos);
@@ -361,7 +360,7 @@ class BasicRouter {
     }
 
     util::ToLower(path);
-    const std::regex regex("\\{([^/]*)\\}");
+    std::regex regex("\\{([^/]*)\\}");
 
     std::size_t path_arg_num = 0;
     {
@@ -373,7 +372,7 @@ class BasicRouter {
       }
     }
 
-    const auto replaced_path = std::regex_replace(path, regex, "([^/]*)");
+    auto replaced_path = std::regex_replace(path, regex, "([^/]*)");
     RouteItem* item_ptr = nullptr;
     bool is_regex = (replaced_path != path);
     if (is_regex) {
@@ -430,7 +429,7 @@ class BasicRouter {
   Ret Routing(PreArgs&&... pre_args, const std::string& method,
               std::string_view target) {
     std::string_view path_sv, param_sv;
-    const auto pos = target.find('?');
+    auto pos = target.find('?');
     if (pos != std::string_view::npos) {
       path_sv = target.substr(0, pos);
       param_sv = target.substr(pos + 1);
@@ -455,7 +454,7 @@ class BasicRouter {
     ArgumentMap arg_map;
     while (param_sv.size() > 0) {
       std::string_view kv_sv;
-      const auto pos = param_sv.find('&');
+      auto pos = param_sv.find('&');
       if (pos != std::string_view::npos) {
         kv_sv = param_sv.substr(0, pos);
         param_sv.remove_prefix(pos + 1);

@@ -13,8 +13,7 @@ std::string MakeMd5(const void* bytes, std::size_t bytes_size) noexcept {
   unsigned char raw_result[16];
   unsigned char* p = raw_result;
   for (auto chunk = 0; chunk < 4; ++chunk) {
-    const unsigned char* cin =
-        reinterpret_cast<const unsigned char*>(&digest[chunk]);
+    unsigned char* cin = reinterpret_cast<unsigned char*>(&digest[chunk]);
     for (auto byte = 0; byte < 4; ++byte) {
 #if BOOST_ENDIAN_LITTLE_BYTE
       *p++ = *(cin + (3 - byte));
