@@ -67,7 +67,7 @@ class BasicConnection {
         auto target = parser_->get().target();
         router_.Routing(ctx, method.to_string(),
                         std::string_view(target.data(), target.size()));
-      } catch (std::exception& e) {
+      } catch (const std::exception& e) {
         return ctx->BadRequest(e.what(), "text/plain", false);
       }
     }

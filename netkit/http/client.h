@@ -51,7 +51,7 @@ class BasicClient {
       boost::beast::http::write(stream, req);
       boost::beast::http::read(stream, buffer_, resp);
       success = true;
-    } catch (std::exception&) {
+    } catch (const std::exception&) {
       Close();
       if (!retry) {
         throw;

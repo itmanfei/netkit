@@ -39,7 +39,7 @@ void TestHttpRouter(std::stop_token st) {
     router.AddRoute("/hello?name&nick_name&age", &OnHelloArg, {"GET"});
     router.AddRoute("/hello/{name}", &OnHelloPath, {"GET"});
     router.AddRoute("/hello", &OnHello, {"GET", "POST"});
-  } catch (std::exception& e) {
+  } catch (const std::exception& e) {
     std::cout << e.what() << std::endl;
     throw;
   }
@@ -83,7 +83,7 @@ void TestHttpRouter(std::stop_token st) {
     std::cout << item.method << " " << item.url << std::endl;
     try {
       router.Routing(ctx, item.method, item.url);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       std::cout << e.what() << std::endl;
     }
     if (item.func != funcname) {

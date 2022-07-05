@@ -111,7 +111,7 @@ bool AuthorizationDigest::ParseFromString(std::string_view str) noexcept {
         }
         try {
           nc = std::stoul(nc_hex, nullptr, 16);
-        } catch (std::exception&) {
+        } catch (const std::exception&) {
           nc = 0;
           break;
         }
