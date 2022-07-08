@@ -9,6 +9,8 @@
 
 namespace netkit::http {
 
+using Parser = boost::beast::http::request_parser<BodyType>;
+
 template <class T>
 class BasicConnection {
   friend class Context;
@@ -32,7 +34,7 @@ class BasicConnection {
     boost::beast::get_lowest_layer(Derived().stream()).expires_never();
   }
 
-  void ReadHeader() {
+  void ReadRequest() {
     parser_.emplace();
     parser_->header_limit(settings_.header_limit());
     if (settings_.body_limit()) {
@@ -40,13 +42,13 @@ class BasicConnection {
     } else {
       parser_->body_limit(boost::none);
     }
-    boost::beast::http::async_read_header(
+    boost::beast::http::async_read(
         Derived().stream(), buffer_, *parser_,
-        std::bind_front(&Self::OnReadHeader, Derived().shared_from_this()));
+        std::bind_front(&Self::OnRequest, Derived().shared_from_this()));
   }
 
-  void OnReadHeader(const boost::beast::error_code& ec,
-                    std::size_t bytes_transferred) {
+  void OnRequest(const boost::beast::error_code& ec,
+                 std::size_t bytes_transferred) {
     boost::ignore_unused(bytes_transferred);
     if (ec) {
       if (ec == boost::beast::http::error::end_of_stream) {
@@ -56,58 +58,19 @@ class BasicConnection {
       ExpiresNever();
       auto ctx = std::make_shared<Context>(
           std::static_pointer_cast<Self>(Derived().shared_from_this()),
-          *parser_);
+          parser_->release());
       for (const auto& filter : settings_.filters()) {
         if (filter->OnIncomingRequest(ctx) == Filter::Result::kResponded) {
           return;
         }
       }
       try {
-        auto method = parser_->get().method_string();
-        auto target = parser_->get().target();
+        auto method = ctx->GetRequest().method_string();
+        auto target = ctx->GetRequest().target();
         router_.Routing(ctx, method.to_string(),
                         std::string_view(target.data(), target.size()));
       } catch (const std::exception& e) {
         return ctx->BadRequest(e.what(), "text/plain", false);
-      }
-    }
-  }
-
-  template <class Handler>
-  void ReadSome(void* buf, std::size_t size, Handler&& handler) {
-    parser_->get().body().data = buf;
-    parser_->get().body().size = size;
-    boost::beast::http::async_read(Derived().stream(), buffer_, *parser_,
-                                   std::forward<Handler>(handler));
-  }
-
-  template <class Handler>
-  void ReadAll(void* buf, std::size_t size, Handler&& handler) {
-    ReadSome(buf, size,
-             std::bind_front(&Self::OnReadSome<Handler>, this, (char*)buf, size,
-                             0, std::forward<Handler>(handler)));
-  }
-
-  template <class Handler>
-  void OnReadSome(char* buf, std::size_t size, std::size_t total_transferred,
-                  Handler&& handler, boost::beast::error_code&& ec,
-                  std::size_t bytes_transferred) {
-    total_transferred += bytes_transferred;
-    if (ec == boost::beast::http::error::need_buffer) {
-      ec = {};
-    }
-    if (ec) {
-      handler(ec, total_transferred);
-    } else {
-      buf += bytes_transferred;
-      size -= bytes_transferred;
-      if (parser_->is_done()) {
-        handler(ec, total_transferred);
-      } else {
-        ReadSome(
-            buf, size,
-            std::bind_front(&Self::OnReadSome<Handler>, this, buf, size,
-                            total_transferred, std::forward<Handler>(handler)));
       }
     }
   }
@@ -139,7 +102,7 @@ class BasicConnection {
         Derived().DoEof();
       } else {
         ExpiresAfter(settings_.read_timeout());
-        ReadHeader();
+        ReadRequest();
       }
     }
   }
@@ -164,7 +127,7 @@ class PlainConnection : public BasicConnection<PlainConnection>,
 
   ~PlainConnection() noexcept {}
 
-  void Run() { ReadHeader(); }
+  void Run() { ReadRequest(); }
 
   boost::beast::tcp_stream& stream() noexcept { return stream_; }
 
@@ -210,7 +173,7 @@ class SslConnection : public BasicConnection<SslConnection>,
   void OnHandshake(const boost::beast::error_code& ec, std::size_t bytes_used) {
     if (!ec) {
       buffer_.consume(bytes_used);
-      ReadHeader();
+      ReadRequest();
     }
   }
 

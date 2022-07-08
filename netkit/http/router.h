@@ -146,7 +146,7 @@ class BasicRouter {
     virtual bool IsMatched(std::size_t path_arg_num,
                            const ArgumentMap& arg_map) const noexcept = 0;
 
-    virtual Ret Invoke(PreArgs&&... pre_args, std::cmatch& results,
+    virtual Ret Invoke(PreArgs&&... pre_args, std::smatch& results,
                        ArgumentMap& arg_map) = 0;
   };
 
@@ -195,7 +195,7 @@ class BasicRouter {
       return true;
     }
 
-    Ret Invoke(PreArgs&&... pre_args, std::cmatch& results,
+    Ret Invoke(PreArgs&&... pre_args, std::smatch& results,
                ArgumentMap& arg_map) override {
       return DoInvoke(std::forward<PreArgs>(pre_args)..., results, arg_map);
     }
@@ -231,7 +231,7 @@ class BasicRouter {
 
     template <class... Values>
     std::enable_if_t<sizeof...(Values) < Traits::kArgNum, Ret> DoInvoke(
-        PreArgs&&... pre_args, std::cmatch& results, ArgumentMap& arg_map,
+        PreArgs&&... pre_args, std::smatch& results, ArgumentMap& arg_map,
         Values&&... values) {
       constexpr auto index = sizeof...(Values);
       using ValueType = std::remove_cv_t<
@@ -256,7 +256,7 @@ class BasicRouter {
 
     template <class... Values>
     std::enable_if_t<sizeof...(Values) == Traits::kArgNum, Ret> DoInvoke(
-        PreArgs&&... pre_args, std::cmatch&, ArgumentMap&, Values&&... values) {
+        PreArgs&&... pre_args, std::smatch&, ArgumentMap&, Values&&... values) {
       if constexpr (std::is_same_v<typename Traits::ClassType, void>) {
         return func_(std::forward<PreArgs>(pre_args)...,
                      std::forward<Values>(values)...);
@@ -311,7 +311,7 @@ class BasicRouter {
     }
 
     Ret Invoke(PreArgs&&... pre_args, const std::string& method,
-               std::cmatch& results, ArgumentMap&& arg_map) {
+               std::smatch& results, ArgumentMap&& arg_map) {
       std::size_t path_arg_num = 0;
       if (results.size() > 1) {
         path_arg_num = results.size() - 1;
@@ -359,7 +359,6 @@ class BasicRouter {
       path = target;
     }
 
-    util::ToLower(path);
     std::regex regex("\\{([^/]*)\\}");
 
     std::size_t path_arg_num = 0;
@@ -407,17 +406,14 @@ class BasicRouter {
                             std::forward<Function>(func));
   }
 
-  RouteItem* FindRoute(const char* path, std::size_t size,
-                       std::cmatch& results) noexcept {
+  RouteItem* FindRoute(const std::string& path, std::smatch& results) noexcept {
     RouteItem* item_ptr = nullptr;
-    std::string lowered_path(path, size);
-    util::ToLower(lowered_path);
-    auto it = route_map_.find(lowered_path);
+    auto it = route_map_.find(path);
     if (it != route_map_.end()) {
       item_ptr = &it->second;
     } else {
       for (auto& item : route_vec_) {
-        if (std::regex_match(path, path + size, results, item.regex())) {
+        if (std::regex_match(path, results, item.regex())) {
           item_ptr = &item;
           break;
         }
@@ -436,14 +432,15 @@ class BasicRouter {
     } else {
       path_sv = target;
     }
-    std::cmatch results;
+    std::smatch results;
     RouteItem* route = nullptr;
     std::string decoded_path;
     if (IsNeedDecode(path_sv)) {
       decoded_path = DecodeData(path_sv);
-      route = FindRoute(decoded_path.c_str(), decoded_path.size(), results);
+      route = FindRoute(decoded_path, results);
     } else {
-      route = FindRoute(path_sv.data(), path_sv.size(), results);
+      decoded_path = path_sv;
+      route = FindRoute(decoded_path, results);
     }
     if (!route) {
       throw std::runtime_error("Route not found");

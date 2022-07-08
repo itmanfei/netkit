@@ -11,7 +11,7 @@ namespace http = boost::beast::http;
 
 Filter::Result CorsFilter::OnIncomingRequest(const Context::Ptr& ctx) {
   ctx->set_origin("");
-  auto& req = ctx->parser().get();
+  auto& req = ctx->GetRequest();
   if (req.method() == http::verb::options) {
     return HandleOptions(ctx);
   }
@@ -108,37 +108,28 @@ CorsFilter& CorsFilter::set_expose_headers(
 }
 
 Filter::Result CorsFilter::HandleOptions(const Context::Ptr& ctx) const {
-  auto& parser = ctx->parser();
+  auto& req = ctx->GetRequest();
   http::response<http::empty_body> resp;
-  resp.version(parser.get().version());
-  if ((parser.content_length() && *parser.content_length() > 0) ||
-      parser.chunked()) {
-    resp.keep_alive(false);
-    resp.result(http::status::payload_too_large);
-  } else {
-    auto origin = parser.get()[http::field::origin];
-    if (origin.size() > 0) {
-      auto request_method =
-          parser.get()[http::field::access_control_request_method];
-      if (request_method.empty()) {
-        resp.result(http::status::bad_request);
-      } else {
-        auto request_headers =
-            parser.get()[http::field::access_control_request_headers];
-        auto allowed_origin =
-            Preflight(origin, request_method, request_headers);
-        if (allowed_origin.size() > 0) {
-          ctx->set_origin(allowed_origin);
-          resp.result(http::status::ok);
-        } else {
-          resp.result(http::status::forbidden);
-        }
-      }
+  resp.version(req.version());
+  auto origin = req[http::field::origin];
+  if (origin.size() > 0) {
+    auto request_method = req[http::field::access_control_request_method];
+    if (request_method.empty()) {
+      resp.result(http::status::bad_request);
     } else {
-      resp.result(http::status::ok);
-      resp.set(http::field::allow, "*");
-      resp.set(http::field::age, "3600");
+      auto request_headers = req[http::field::access_control_request_headers];
+      auto allowed_origin = Preflight(origin, request_method, request_headers);
+      if (allowed_origin.size() > 0) {
+        ctx->set_origin(allowed_origin);
+        resp.result(http::status::ok);
+      } else {
+        resp.result(http::status::forbidden);
+      }
     }
+  } else {
+    resp.result(http::status::ok);
+    resp.set(http::field::allow, "*");
+    resp.set(http::field::age, "3600");
   }
   ctx->Response(std::move(resp));
   return Result::kResponded;

@@ -11,8 +11,8 @@ class AuthorizationFilter : public http::Filter {
   const char* name() const noexcept override { return "AuthFilter"; }
 
   Result OnIncomingRequest(const http::Context::Ptr& ctx) override {
-    auto& req = ctx->parser().get();
-    if (req.target() == "/user/login") {
+    auto& req = ctx->GetRequest();
+    if (req.target().starts_with("/user/login")) {
       return Result::kPassed;
     }
     if (std::rand() % 100 < 30) {
@@ -32,19 +32,10 @@ static void UserLogin(const http::Context::Ptr& ctx) {
 }
 
 static void AddChannel(const http::Context::Ptr& ctx) {
-  if (!ctx->parser().content_length()) {
-    return ctx->LengthRequired();
-  }
-  auto len = *ctx->parser().content_length();
-  auto buf = std::make_shared<char[]>(len);
-  ctx->ReadAll(buf.get(), len,
-               [ctx, buf, len](const std::error_code& ec, std::size_t) {
-                 if (ec) return;
-                 std::lock_guard lock(mutex);
-                 auto id = ++channel_id;
-                 channel_map[id] = std::string(buf.get(), len);
-                 ctx->Ok(std::to_string(id), "text/plain");
-               });
+  std::lock_guard lock(mutex);
+  auto id = ++channel_id;
+  channel_map[id] = ctx->GetRequest().body();
+  ctx->Ok(std::to_string(id), "text/plain");
 }
 
 static void DeleteChannel(const http::Context::Ptr& ctx, std::uint64_t id) {
@@ -54,21 +45,12 @@ static void DeleteChannel(const http::Context::Ptr& ctx, std::uint64_t id) {
 }
 
 static void UpdateChannel(const http::Context::Ptr& ctx, std::uint64_t id) {
-  if (!ctx->parser().content_length()) {
-    return ctx->LengthRequired();
+  std::lock_guard lock(mutex);
+  auto it = channel_map.find(id);
+  if (it != channel_map.end()) {
+    it->second = ctx->GetRequest().body();
   }
-  auto len = *ctx->parser().content_length();
-  auto buf = std::make_shared<char[]>(len);
-  ctx->ReadAll(buf.get(), len,
-               [ctx, buf, len, id](const std::error_code& ec, std::size_t) {
-                 if (ec) return;
-                 std::lock_guard lock(mutex);
-                 auto it = channel_map.find(id);
-                 if (it != channel_map.end()) {
-                   it->second = std::string(buf.get(), len);
-                 }
-                 ctx->Ok();
-               });
+  ctx->Ok();
 }
 
 static void GetChannelList(const http::Context::Ptr& ctx) {

@@ -13,8 +13,9 @@ class SslConnection;
 template <class T>
 class BasicConnection;
 
-using Parser =
-    boost::beast::http::request_parser<boost::beast::http::buffer_body>;
+using BodyType = boost::beast::http::string_body;
+
+using Request = boost::beast::http::request<BodyType>;
 
 class Context : public std::enable_shared_from_this<Context> {
   using Self = Context;
@@ -24,34 +25,12 @@ class Context : public std::enable_shared_from_this<Context> {
 
   template <class T>
   Context(const std::shared_ptr<BasicConnection<T>>& conn,
-          Parser& parser) noexcept
-      : conn_(conn), parser_(parser) {}
+          Request&& req) noexcept
+      : conn_(conn), req_(std::move(req)) {}
 
   ~Context() noexcept {}
 
-  const Parser& parser() const noexcept { return parser_; }
-
-  void ExpiresAfter(const std::chrono::milliseconds& time);
-
-  void ExpiresNever();
-
-  template <class Handler>
-  void ReadSome(void* buf, std::size_t size, Handler&& handler) {
-    std::visit(
-        [&](const auto& conn) {
-          conn->ReadSome(buf, size, std::forward<Handler>(handler));
-        },
-        conn_);
-  }
-
-  template <class Handler>
-  void ReadAll(void* buf, std::size_t size, Handler&& handler) {
-    std::visit(
-        [&](const auto& conn) {
-          conn->ReadAll(buf, size, std::forward<Handler>(handler));
-        },
-        conn_);
-  }
+  const Request& GetRequest() const noexcept { return req_; }
 
   template <class Body>
   void Response(boost::beast::http::response<Body>&& resp) {
@@ -169,7 +148,7 @@ class Context : public std::enable_shared_from_this<Context> {
   std::variant<std::shared_ptr<BasicConnection<PlainConnection>>,
                std::shared_ptr<BasicConnection<SslConnection>>>
       conn_;
-  Parser& parser_;
+  Request req_;
 };
 
 }  // namespace netkit::http
