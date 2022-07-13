@@ -4,6 +4,7 @@
 #include <boost/beast.hpp>
 #include <memory>
 #include <variant>
+#include <vector>
 
 namespace netkit::http {
 
@@ -16,6 +17,8 @@ class BasicConnection;
 using BodyType = boost::beast::http::string_body;
 
 using Request = boost::beast::http::request<BodyType>;
+
+using HeaderList = std::vector<std::pair<std::string, std::string>>;
 
 class Context : public std::enable_shared_from_this<Context> {
   using Self = Context;
@@ -41,32 +44,88 @@ class Context : public std::enable_shared_from_this<Context> {
         conn_);
   }
 
-  void Response(boost::beast::http::status status, bool keep_alive);
+  void Response(boost::beast::http::status status,
+                const HeaderList& headers = {});
 
-  void Response(boost::beast::http::status status);
+  void Response(boost::beast::http::status status, bool keep_alive,
+                const HeaderList& headers = {});
 
   void Response(boost::beast::http::status status, std::string&& body,
-                const char* content_type, bool keep_alive);
+                const char* content_type, const HeaderList& headers = {});
 
   void Response(boost::beast::http::status status, std::string&& body,
-                const char* content_type);
+                const char* content_type, bool keep_alive,
+                const HeaderList& headers = {});
+
+  void Response(boost::beast::http::status status, const std::string& body,
+                const char* content_type, const HeaderList& headers = {});
+
+  void Response(boost::beast::http::status status, const std::string& body,
+                const char* content_type, bool keep_alive,
+                const HeaderList& headers = {});
+
+  void Response(boost::beast::http::status status, const char* body,
+                const char* content_type, const HeaderList& headers = {});
+
+  void Response(boost::beast::http::status status, const char* body,
+                const char* content_type, bool keep_alive,
+                const HeaderList& headers = {});
+
+  void Response(boost::beast::http::status status, const char* body,
+                std::size_t size, const char* content_type,
+                const HeaderList& headers = {});
+
+  void Response(boost::beast::http::status status, const char* body,
+                std::size_t size, const char* content_type, bool keep_alive,
+                const HeaderList& headers = {});
 
 #ifndef GENERATE_HTTP_RESPONSE_FUNC
-#define GENERATE_HTTP_RESPONSE_FUNC(_name_, _status_)                          \
-  void _name_() { Response(boost::beast::http::status::_status_); }            \
-  void _name_(bool keep_alive) {                                               \
-    Response(boost::beast::http::status::_status_, keep_alive);                \
-  }                                                                            \
-  void _name_(std::string&& body, const char* content_type, bool keep_alive) { \
-    Response(boost::beast::http::status::_status_, std::move(body),            \
-             content_type, keep_alive);                                        \
-  }                                                                            \
-  void _name_(std::string&& body, const char* content_type) {                  \
-    Response(boost::beast::http::status::_status_, std::move(body),            \
-             content_type);                                                    \
-  }                                                                            \
-  void _name_(const char* body, const char* content_type) {                    \
-    Response(boost::beast::http::status::_status_, body, content_type);        \
+#define GENERATE_HTTP_RESPONSE_FUNC(_name_, _status_)                        \
+  void _name_(const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, headers);                 \
+  }                                                                          \
+  void _name_(bool keep_alive, const HeaderList& headers = {}) {             \
+    Response(boost::beast::http::status::_status_, keep_alive, headers);     \
+  }                                                                          \
+  void _name_(std::string&& body, const char* content_type,                  \
+              const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, std::move(body),          \
+             content_type, headers);                                         \
+  }                                                                          \
+  void _name_(std::string&& body, const char* content_type, bool keep_alive, \
+              const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, std::move(body),          \
+             content_type, keep_alive, headers);                             \
+  }                                                                          \
+  void _name_(const std::string& body, const char* content_type,             \
+              const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, body, content_type,       \
+             headers);                                                       \
+  }                                                                          \
+  void _name_(const std::string& body, const char* content_type,             \
+              bool keep_alive, const HeaderList& headers = {}) {             \
+    Response(boost::beast::http::status::_status_, body, content_type,       \
+             keep_alive, headers);                                           \
+  }                                                                          \
+  void _name_(const char* body, const char* content_type,                    \
+              const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, body, content_type,       \
+             headers);                                                       \
+  }                                                                          \
+  void _name_(const char* body, const char* content_type, bool keep_alive,   \
+              const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, body, content_type,       \
+             keep_alive, headers);                                           \
+  }                                                                          \
+  void _name_(const char* body, std::size_t size, const char* content_type,  \
+              const HeaderList& headers = {}) {                              \
+    Response(boost::beast::http::status::_status_, body, size, content_type, \
+             headers);                                                       \
+  }                                                                          \
+  void _name_(const char* body, std::size_t size, const char* content_type,  \
+              bool keep_alive, const HeaderList& headers = {}) {             \
+    Response(boost::beast::http::status::_status_, body, size, content_type, \
+             keep_alive, headers);                                           \
   }
   // 1xx
   GENERATE_HTTP_RESPONSE_FUNC(Continue, continue_)
