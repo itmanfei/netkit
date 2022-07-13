@@ -103,7 +103,6 @@ bool AuthorizationDigest::ParseFromString(std::string_view str) noexcept {
         pos1 = str.find("nc=");
         if (pos1 == npos) break;
         pos2 = str.find(',', pos1 + 3);
-        std::string nc_hex;
         if (pos2 == npos) {
           nc_hex = str.substr(pos1 + 3);
         } else {
@@ -123,6 +122,35 @@ bool AuthorizationDigest::ParseFromString(std::string_view str) noexcept {
     return true;
   } while (false);
   return false;
+}
+
+bool AuthorizationDigest::Verify(const std::string& method, const char* body,
+                                 std::size_t size,
+                                 const std::string& password) {
+  std::string str;
+  auto ha1 = util::MakeMd5(username + ":" + realm + ":" + password);
+  if (qop) {
+    if (!cnonce) {
+      return false;
+    }
+    std::string ha2;
+    if (qop == "auth") {
+      ha2 = util::MakeMd5(method + ":" + uri);
+    } else if (qop == "auth-int") {
+      if (!body) {
+        return false;
+      }
+      ha2 = util::MakeMd5(method + ":" + uri + ":" + util::MakeMd5(body, size));
+    } else {
+      return false;
+    }
+    str = util::MakeMd5(ha1 + ":" + nonce + ":" + nc_hex + ":" + *cnonce + ":" +
+                        *qop + ":" + ha2);
+  } else {
+    auto ha2 = util::MakeMd5(method + ":" + uri);
+    str = util::MakeMd5(ha1 + ":" + nonce + ":" + ha2);
+  }
+  return str == response;
 }
 
 std::string WwwAuthenticateDigest::ToString() const noexcept {

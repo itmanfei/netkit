@@ -15,6 +15,7 @@ class AuthorizationDigest {
   std::string uri;
   std::string response;
   std::string algorithm;
+  std::string nc_hex;
   std::uint32_t nc = 0;
   std::optional<std::string> cnonce;
   std::optional<std::string> opaque;
@@ -30,6 +31,19 @@ class AuthorizationDigest {
 
   bool ParseFromString(const char* str, std::size_t size) noexcept {
     return ParseFromString(std::string_view(str, size));
+  }
+
+  bool Verify(const std::string& method, const char* body, std::size_t size,
+              const std::string& password);
+
+  bool Verify(const std::string& method, const std::string& body,
+              const std::string& password) {
+    return Verify(method, body.c_str(), body.size(), password);
+  }
+
+  bool Verify(const std::string& method, std::string_view body,
+              const std::string& password) {
+    return Verify(method, body.data(), body.size(), password);
   }
 };
 
