@@ -26,14 +26,6 @@ class BasicConnection {
  protected:
   T& Derived() noexcept { return static_cast<T&>(*this); }
 
-  void ExpiresAfter(const std::chrono::milliseconds& time) {
-    boost::beast::get_lowest_layer(Derived().stream()).expires_after(time);
-  }
-
-  void ExpiresNever() {
-    boost::beast::get_lowest_layer(Derived().stream()).expires_never();
-  }
-
   void ReadRequest() {
     parser_.emplace();
     parser_->header_limit(settings_.header_limit());
@@ -55,7 +47,7 @@ class BasicConnection {
         Derived().DoEof();
       }
     } else {
-      ExpiresNever();
+      Derived().ExpiresNever();
       auto ctx = std::make_shared<Context>(
           std::static_pointer_cast<Self>(Derived().shared_from_this()),
           parser_->release());
@@ -101,7 +93,7 @@ class BasicConnection {
       if (close) {
         Derived().DoEof();
       } else {
-        ExpiresAfter(settings_.read_timeout());
+        Derived().ExpiresAfter(settings_.read_timeout());
         ReadRequest();
       }
     }
@@ -130,6 +122,12 @@ class PlainConnection : public BasicConnection<PlainConnection>,
   void Run() { ReadRequest(); }
 
   boost::beast::tcp_stream& stream() noexcept { return stream_; }
+
+  void ExpiresAfter(const std::chrono::milliseconds& time) {
+    stream_.expires_after(time);
+  }
+
+  void ExpiresNever() { stream_.expires_never(); }
 
   void DoEof() {
     boost::beast::error_code ec;
@@ -163,6 +161,12 @@ class SslConnection : public BasicConnection<SslConnection>,
   boost::beast::ssl_stream<boost::beast::tcp_stream>& stream() noexcept {
     return stream_;
   }
+
+  void ExpiresAfter(const std::chrono::milliseconds& time) {
+    stream_.next_layer().expires_after(time);
+  }
+
+  void ExpiresNever() { stream_.next_layer().expires_never(); }
 
   void DoEof() {
     stream_.async_shutdown(
