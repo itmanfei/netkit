@@ -4,6 +4,12 @@
 
 namespace netkit::http {
 
+void Context::set_user_data(std::any&& data) noexcept {
+  std::visit(
+      [this, &data](const auto& conn) { conn->set_user_data(std::move(data)); },
+      conn_);
+}
+
 void Context::Response(boost::beast::http::status status,
                        const HeaderList& headers) {
   Response(status, req_.keep_alive(), headers);

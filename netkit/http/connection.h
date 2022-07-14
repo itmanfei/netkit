@@ -4,6 +4,7 @@
 #include <netkit/http/router.h>
 #include <netkit/http/settings.h>
 
+#include <any>
 #include <boost/beast/ssl.hpp>
 #include <memory>
 
@@ -25,6 +26,19 @@ class BasicConnection {
 
  protected:
   T& Derived() noexcept { return static_cast<T&>(*this); }
+
+  void set_user_data(std::any&& data) noexcept { user_data_ = std::move(data); }
+
+  template <class T>
+  T& try_get_user_data(T&& default_data) noexcept {
+    if (user_data_.has_value()) {
+      try {
+        return std::any_cast<T&>(user_data_);
+      } catch (const std::exception&) {
+      }
+    }
+    return (T&)default_data;
+  }
 
   void ReadRequest() {
     parser_.emplace();
@@ -105,6 +119,7 @@ class BasicConnection {
   Router& router_;
   std::optional<Parser> parser_;
   std::shared_ptr<void> resp_;
+  std::any user_data_;
 };
 
 class PlainConnection : public BasicConnection<PlainConnection>,

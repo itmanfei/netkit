@@ -1,6 +1,7 @@
 #pragma once
 #include <netkit/http/settings.h>
 
+#include <any>
 #include <boost/beast.hpp>
 #include <memory>
 #include <variant>
@@ -32,6 +33,18 @@ class Context : public std::enable_shared_from_this<Context> {
       : conn_(conn), req_(std::move(req)) {}
 
   ~Context() noexcept {}
+
+  void set_user_data(std::any&& data) noexcept;
+
+  template <class T>
+  T& try_get_user_data(T&& default_data) noexcept {
+    return std::visit(
+        [this, &default_data](const auto& conn) {
+          return std::ref(
+              conn->try_get_user_data(std::forward<T>(default_data)));
+        },
+        conn_);
+  }
 
   const Request& GetRequest() const noexcept { return req_; }
 
