@@ -15,7 +15,6 @@ class AuthorizationDigest {
   std::string uri;
   std::string response;
   std::string algorithm;
-  std::string nc_hex;
   std::uint32_t nc = 0;
   std::optional<std::string> cnonce;
   std::optional<std::string> opaque;

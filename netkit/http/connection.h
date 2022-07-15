@@ -30,14 +30,14 @@ class BasicConnection {
   void set_user_data(std::any&& data) noexcept { user_data_ = std::move(data); }
 
   template <class T>
-  T& try_get_user_data(T&& default_data) noexcept {
+  T* try_get_user_data() noexcept {
     if (user_data_.has_value()) {
       try {
-        return std::any_cast<T&>(user_data_);
+        return std::any_cast<T>(&user_data_);
       } catch (const std::exception&) {
       }
     }
-    return (T&)default_data;
+    return nullptr;
   }
 
   void ReadRequest() {

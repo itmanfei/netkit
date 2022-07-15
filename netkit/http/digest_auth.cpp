@@ -102,6 +102,7 @@ bool AuthorizationDigest::ParseFromString(std::string_view str) noexcept {
         cnonce = str.substr(pos1 + 8, pos2 - pos1 - 8);
         pos1 = str.find("nc=");
         if (pos1 == npos) break;
+        std::string nc_hex;
         pos2 = str.find(',', pos1 + 3);
         if (pos2 == npos) {
           nc_hex = str.substr(pos1 + 3);
@@ -144,6 +145,8 @@ bool AuthorizationDigest::Verify(const std::string& method, const char* body,
     } else {
       return false;
     }
+    char nc_hex[10] = {0};
+    snprintf(nc_hex, sizeof(nc_hex), "%08x", nc);
     str = util::MakeMd5(ha1 + ":" + nonce + ":" + nc_hex + ":" + *cnonce + ":" +
                         *qop + ":" + ha2);
   } else {

@@ -201,7 +201,7 @@ class BasicRouter {
     }
 
     template <class Value>
-    static constexpr void SetValue(Value& val, std::string&& str) {
+    static void SetValue(Value& val, std::string&& str) {
       if constexpr (std::is_same_v<std::string, Value>) {
         val = std::move(str);
       } else if constexpr (std::is_same_v<boost::gregorian::date, Value>) {
@@ -214,8 +214,7 @@ class BasicRouter {
     }
 
     template <class Value>
-    static constexpr void SetValue(std::optional<Value>& val,
-                                   std::string&& str) {
+    static void SetValue(std::optional<Value>& val, std::string&& str) {
       if constexpr (std::is_same_v<std::string, Value>) {
         val = std::make_optional<Value>(std::move(str));
       } else if constexpr (std::is_same_v<boost::gregorian::date, Value>) {
