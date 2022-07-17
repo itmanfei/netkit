@@ -12,7 +12,7 @@ namespace netkit::http {
 
 using Parser = boost::beast::http::request_parser<BodyType>;
 
-template <class T>
+template <class D>
 class BasicConnection {
   friend class Context;
   using Self = BasicConnection;
@@ -25,7 +25,7 @@ class BasicConnection {
   ~BasicConnection() noexcept {}
 
  protected:
-  T& Derived() noexcept { return static_cast<T&>(*this); }
+  D& Derived() noexcept { return static_cast<D&>(*this); }
 
   void set_user_data(std::any&& data) noexcept { user_data_ = std::move(data); }
 

@@ -9,4 +9,4 @@ set(CMAKE_BUILD_TYPE "Release")
 
 include_directories(..)
 
-add_library(netkit STATIC ./http/context.cpp ./http/cors_filter.cpp)
+add_library(netkit STATIC ./utilty.cpp ./http/context.cpp ./http/cors_filter.cpp ./http/digest_auth.cpp)

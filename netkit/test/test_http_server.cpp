@@ -28,6 +28,9 @@ static std::mutex mutex;
 static std::unordered_map<std::uint64_t, std::string> channel_map;
 
 static void UserLogin(const http::Context::Ptr& ctx) {
+  ctx->set_user_data(true);
+  bool* ud = ctx->try_get_user_data<bool>();
+  assert(ud && *ud);
   ctx->Ok("Login success", "text/plain");
 }
 

@@ -39,7 +39,8 @@ class Context : public std::enable_shared_from_this<Context> {
   template <class T>
   T* try_get_user_data() noexcept {
     return std::visit(
-        [](const auto& conn) { return conn->try_get_user_data<T>(); }, conn_);
+        [](const auto& conn) { return conn->template try_get_user_data<T>(); },
+        conn_);
   }
 
   const Request& GetRequest() const noexcept { return req_; }
