@@ -105,7 +105,10 @@ class SslClient : public BasicClient<SslClient> {
  public:
   SslClient(boost::asio::io_context& ioc, boost::asio::ssl::context& ssl_ctx,
             const std::string& host, std::uint16_t port) noexcept
-      : BasicClient(ioc, host, port), stream_(ioc, ssl_ctx) {}
+      : ioc_(ioc),
+        ssl_ctx_(ssl_ctx),
+        BasicClient(ioc, host, port),
+        stream_(ioc, ssl_ctx) {}
 
  private:
   void DoConnect(const boost::asio::ip::tcp::resolver::results_type& results) {
@@ -116,6 +119,10 @@ class SslClient : public BasicClient<SslClient> {
   void DoClose() noexcept {
     boost::system::error_code ec;
     stream_.shutdown(ec);
+    // https://github.com/boostorg/beast/issues/995
+    // https://github.com/chriskohlhoff/asio/issues/804
+    stream_ =
+        boost::beast::ssl_stream<boost::beast::tcp_stream>(ioc_, ssl_ctx_);
   }
 
  private:
@@ -125,6 +132,8 @@ class SslClient : public BasicClient<SslClient> {
 
  private:
   friend class BasicClient;
+  boost::asio::io_context& ioc_;
+  boost::asio::ssl::context& ssl_ctx_;
   boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
 };
 
