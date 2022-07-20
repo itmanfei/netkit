@@ -30,6 +30,7 @@ class BasicClient {
   void Close() noexcept {
     resolver_.cancel();
     Derived().DoClose();
+    buffer_ = {};
     connected_ = false;
   }
 
