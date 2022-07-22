@@ -106,9 +106,9 @@ class SslClient : public BasicClient<SslClient> {
  public:
   SslClient(boost::asio::io_context& ioc, boost::asio::ssl::context& ssl_ctx,
             const std::string& host, std::uint16_t port) noexcept
-      : ioc_(ioc),
+      : BasicClient(ioc, host, port),
+        ioc_(ioc),
         ssl_ctx_(ssl_ctx),
-        BasicClient(ioc, host, port),
         stream_(ioc, ssl_ctx) {}
 
  private:
