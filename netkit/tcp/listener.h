@@ -44,7 +44,7 @@ class Listener {
     }
     if (acceptor_.is_open()) {
       socket_ = boost::asio::ip::tcp::socket(pool_.Get());
-      DoAccept(std::move(handler));
+      DoAccept(std::forward<Handler>(handler));
     }
   }
 
