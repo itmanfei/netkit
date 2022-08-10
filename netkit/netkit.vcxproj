@@ -151,6 +151,7 @@
     <ClInclude Include="http\settings.h" />
     <ClInclude Include="io_context_pool.h" />
     <ClInclude Include="tcp\listener.h" />
+    <ClInclude Include="timeout_monitor.h" />
     <ClInclude Include="utility.h" />
   </ItemGroup>
   <ItemGroup>

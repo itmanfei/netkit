@@ -60,6 +60,9 @@
     <ClInclude Include="http\digest_auth.h">
       <Filter>头文件\http</Filter>
     </ClInclude>
+    <ClInclude Include="timeout_monitor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="http\context.cpp">
