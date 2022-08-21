@@ -43,7 +43,11 @@ class BasicServer : public std::enable_shared_from_this<BasicServer<T>> {
         std::bind_front(&Self::OnNewConnection, Self::shared_from_this()));
   }
 
-  void Close() noexcept { listener_.Close(); }
+  void Close() noexcept {
+    boost::asio::post(
+        listener_.executor(),
+        [this, self = Self::shared_from_this()]() { listener_.Close(); });
+  }
 
  private:
   void OnNewConnection(boost::asio::ip::tcp::socket&& socket) {

@@ -25,8 +25,10 @@ class Listener {
     DoAccept(std::forward<Handler>(handler));
   }
 
-  void Close() {
-    boost::asio::post(acceptor_.get_executor(), [this]() { DoClose(); });
+  void Close() { DoClose(); }
+
+  boost::asio::any_io_executor executor() noexcept {
+    return acceptor_.get_executor();
   }
 
  private:
