@@ -40,22 +40,20 @@ class BasicServer : public std::enable_shared_from_this<BasicServer<T>> {
                       bool reuse_address = true) {
     listener_.ListenAndAccept(
         address, port, reuse_address,
-        std::bind_front(&Self::OnNewConnection, Self::shared_from_this()));
+        [this, self = Self::shared_from_this()](
+            boost::asio::ip::tcp::socket&& socket) {
+          boost::beast::tcp_stream stream(std::move(socket));
+          stream.expires_after(settings_.read_timeout());
+          std::make_shared<T>(std::move(stream), *ssl_ctx_,
+                              boost::beast::flat_buffer{}, settings_, router_)
+              ->Run();
+        });
   }
 
   void Close() noexcept {
     boost::asio::post(
         listener_.executor(),
         [this, self = Self::shared_from_this()]() { listener_.Close(); });
-  }
-
- private:
-  void OnNewConnection(boost::asio::ip::tcp::socket&& socket) {
-    boost::beast::tcp_stream stream(std::move(socket));
-    stream.expires_after(settings_.read_timeout());
-    std::make_shared<T>(std::move(stream), *ssl_ctx_,
-                        boost::beast::flat_buffer{}, settings_, router_)
-        ->Run();
   }
 
  private:

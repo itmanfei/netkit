@@ -16,22 +16,18 @@ class TimeoutMonitor {
   void Start(const std::chrono::duration<_Rep, _Period>& time,
              Handler&& handler) {
     timer_.expires_after(time);
-    timer_.async_wait(std::bind_front(&Self::OnTimer<Handler>, this,
-                                      std::forward<Handler>(handler)));
+    timer_.async_wait([this, handler = std::forward<Handler>(handler)](
+                          const boost::system::error_code& ec) mutable {
+      if (!ec) {
+        handler();
+      }
+    });
   }
 
   void Cancel() {
     try {
       timer_.cancel();
     } catch (const std::exception&) {
-    }
-  }
-
- private:
-  template <class Handler>
-  void OnTimer(Handler&& handler, const boost::system::error_code& ec) {
-    if (!ec) {
-      handler();
     }
   }
 

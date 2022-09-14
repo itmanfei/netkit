@@ -11,7 +11,9 @@ void TestTcpListener(std::stop_token st, IoContextPool& pool,
                      const std::string& address, std::uint16_t port) {
   auto listener = std::make_shared<tcp::Listener>(pool);
   listener->ListenAndAccept(address, port, true,
-                            std::bind_front(OnNewConnection, listener));
+                            [listener](boost::asio::ip::tcp::socket&& socket) {
+                              OnNewConnection(listener, std::move(socket));
+                            });
   while (!st.stop_requested()) {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(100ms);

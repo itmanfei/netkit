@@ -50,7 +50,10 @@ class BasicConnection {
     }
     boost::beast::http::async_read(
         Derived().stream(), buffer_, *parser_,
-        std::bind_front(&Self::OnRequest, Derived().shared_from_this()));
+        [self = Derived().shared_from_this()](
+            const boost::beast::error_code& ec, std::size_t bytes_transferred) {
+          self->OnRequest(ec, bytes_transferred);
+        });
   }
 
   void OnRequest(const boost::beast::error_code& ec,
@@ -95,8 +98,10 @@ class BasicConnection {
     resp_ = sp;
     boost::beast::http::async_write(
         Derived().stream(), *sp,
-        std::bind_front(&Self::OnWrite, Derived().shared_from_this(),
-                        !sp->keep_alive()));
+        [self = Derived().shared_from_this(), close = !sp->keep_alive()](
+            const boost::beast::error_code& ec, std::size_t bytes_transferred) {
+          self->OnWrite(close, ec, bytes_transferred);
+        });
   }
 
   void OnWrite(bool close, const boost::beast::error_code& ec,
@@ -170,7 +175,13 @@ class SslConnection : public BasicConnection<SslConnection>,
   void Run() {
     stream_.async_handshake(
         boost::asio::ssl::stream_base::server, buffer_.data(),
-        std::bind_front(&Self::OnHandshake, shared_from_this()));
+        [this, self = shared_from_this()](const boost::beast::error_code& ec,
+                                          std::size_t bytes_used) {
+          if (!ec) {
+            buffer_.consume(bytes_used);
+            ReadRequest();
+          }
+        });
   }
 
   boost::beast::ssl_stream<boost::beast::tcp_stream>& stream() noexcept {
@@ -184,19 +195,8 @@ class SslConnection : public BasicConnection<SslConnection>,
   void ExpiresNever() { stream_.next_layer().expires_never(); }
 
   void DoEof() {
-    stream_.async_shutdown(
-        std::bind_front(&Self::OnShutdown, shared_from_this()));
+    stream_.async_shutdown([](const boost::beast::error_code& ec) {});
   }
-
- private:
-  void OnHandshake(const boost::beast::error_code& ec, std::size_t bytes_used) {
-    if (!ec) {
-      buffer_.consume(bytes_used);
-      ReadRequest();
-    }
-  }
-
-  void OnShutdown(const boost::beast::error_code& ec) {}
 
  private:
   boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
@@ -219,23 +219,23 @@ class DetectConnection : public std::enable_shared_from_this<DetectConnection> {
 
   void Run() {
     boost::beast::async_detect_ssl(
-        stream_, buffer_, std::bind_front(&Self::OnDetect, shared_from_this()));
-  }
-
- private:
-  void OnDetect(const boost::beast::error_code& ec, bool is_ssl) {
-    if (!ec) {
-      if (is_ssl) {
-        std::make_shared<SslConnection>(std::move(stream_), ssl_ctx_,
-                                        std::move(buffer_), settings_, router_)
-            ->Run();
-      } else {
-        std::make_shared<PlainConnection>(std::move(stream_), ssl_ctx_,
-                                          std::move(buffer_), settings_,
-                                          router_)
-            ->Run();
-      }
-    }
+        stream_, buffer_,
+        [this, self = shared_from_this()](const boost::beast::error_code& ec,
+                                          bool is_ssl) {
+          if (!ec) {
+            if (is_ssl) {
+              std::make_shared<SslConnection>(std::move(stream_), ssl_ctx_,
+                                              std::move(buffer_), settings_,
+                                              router_)
+                  ->Run();
+            } else {
+              std::make_shared<PlainConnection>(std::move(stream_), ssl_ctx_,
+                                                std::move(buffer_), settings_,
+                                                router_)
+                  ->Run();
+            }
+          }
+        });
   }
 
  private:

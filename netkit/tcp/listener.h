@@ -34,20 +34,17 @@ class Listener {
  private:
   template <class Handler>
   void DoAccept(Handler&& handler) {
-    acceptor_.async_accept(socket_,
-                           std::bind_front(&Self::OnAccept<Handler>, this,
-                                           std::forward<Handler>(handler)));
-  }
-
-  template <class Handler>
-  void OnAccept(Handler&& handler, const boost::system::error_code& ec) {
-    if (!ec) {
-      handler(std::move(socket_));
-    }
-    if (acceptor_.is_open()) {
-      socket_ = boost::asio::ip::tcp::socket(pool_.Get());
-      DoAccept(std::forward<Handler>(handler));
-    }
+    acceptor_.async_accept(
+        socket_, [this, handler = std::forward<Handler>(handler)](
+                     const boost::system::error_code& ec) mutable {
+          if (!ec) {
+            handler(std::move(socket_));
+          }
+          if (acceptor_.is_open()) {
+            socket_ = boost::asio::ip::tcp::socket(pool_.Get());
+            DoAccept(std::move(handler));
+          }
+        });
   }
 
   void DoClose() noexcept {
